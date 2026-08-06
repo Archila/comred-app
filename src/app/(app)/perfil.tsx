@@ -20,7 +20,7 @@ export default function PerfilScreen() {
     <Screen scrollable edges={['bottom']} contentClassName="gap-4">
       <View className="items-center gap-2 py-4">
         <View className="h-20 w-20 items-center justify-center rounded-full bg-primary-500">
-          <Text className="text-2xl font-bold text-white">
+          <Text className="text-2xl font-bold text-primary-foreground">
             {getInitials(user?.nombreCompleto)}
           </Text>
         </View>

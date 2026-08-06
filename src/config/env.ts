@@ -33,11 +33,23 @@ const apiUrl = required(process.env.EXPO_PUBLIC_API_URL, 'EXPO_PUBLIC_API_URL').
 
 const environment = (process.env.EXPO_PUBLIC_ENV ?? 'development') as AppEnvironment;
 
+/**
+ * UUID de la organizacion (municipalidad) para la que se compila este build.
+ *
+ * Es opcional a proposito: si no viene, la app arranca con la marca por
+ * defecto de COMRED central y adopta la marca real en cuanto el usuario
+ * inicia sesion (se toma de `user.organizacionId`). Con la variable puesta,
+ * la marca correcta ya se ve en la pantalla de login.
+ */
+const organizacionId = process.env.EXPO_PUBLIC_ORGANIZACION_ID?.trim() || null;
+
 export const env = {
   /** Ej: `http://192.168.0.10:3000/v1` */
   apiUrl,
   /** Entorno logico de la app. */
   environment,
+  /** UUID de la organizacion embebido en el build, o `null`. */
+  organizacionId,
   /** Timeout de las peticiones HTTP en milisegundos. */
   apiTimeout: toNumber(process.env.EXPO_PUBLIC_API_TIMEOUT, 20_000),
   /** Atajos utiles para condicionar logs o herramientas de debug. */

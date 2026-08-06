@@ -2,6 +2,7 @@ import type { LucideIcon } from 'lucide-react-native';
 import { ActivityIndicator, Pressable, type PressableProps } from 'react-native';
 
 import { cn } from '@/lib';
+import { useBrandColors } from '@/store';
 
 import { Icon } from './icon';
 import { Text } from './text';
@@ -25,7 +26,9 @@ const CONTAINER_VARIANTS: Record<ButtonVariant, string> = {
 };
 
 const LABEL_VARIANTS: Record<ButtonVariant, string> = {
-  primary: 'text-white',
+  // `primary-foreground` se calcula segun la luminancia del color de la
+  // organizacion: blanco sobre marcas oscuras, casi negro sobre marcas claras.
+  primary: 'text-primary-foreground',
   secondary: 'text-content dark:text-content-dark-default',
   outline: 'text-content dark:text-content-dark-default',
   ghost: 'text-primary-600 dark:text-primary-400',
@@ -68,7 +71,12 @@ export function Button({
   className,
   ...props
 }: ButtonProps) {
+  const brand = useBrandColors();
   const isDisabled = disabled || loading;
+
+  // El spinner no acepta `className`: necesita el color literal de la marca.
+  const spinnerColor =
+    variant === 'primary' ? brand.primaryForeground : variant === 'danger' ? '#FFFFFF' : brand.primary;
 
   return (
     <Pressable
@@ -86,7 +94,7 @@ export function Button({
       {...props}
     >
       {loading ? (
-        <ActivityIndicator size="small" color={variant === 'primary' || variant === 'danger' ? '#FFFFFF' : '#208AEF'} />
+        <ActivityIndicator size="small" color={spinnerColor} />
       ) : (
         icon && <Icon as={icon} size={size === 'sm' ? 16 : 18} className={LABEL_VARIANTS[variant]} />
       )}

@@ -1,4 +1,5 @@
 import { api } from '@/api';
+import { env } from '@/config';
 import { ENDPOINTS } from '@/constants';
 import type { AuthSession, LoginPayload, Usuario } from '@/models';
 
@@ -10,9 +11,17 @@ import type { AuthSession, LoginPayload, Usuario } from '@/models';
  * (ni hooks, ni estado, ni navegacion). Eso lo hace la capa `hooks/`.
  */
 export const authActions = {
-  /** `POST /auth/login` - devuelve el usuario y el JWT. */
+  /**
+   * `POST /auth/login` - devuelve el usuario y el JWT.
+   *
+   * Se envia la organizacion del build cuando existe: sin ella, un userName
+   * que se repite en dos municipalidades es ambiguo y el API lo rechaza.
+   */
   async login(payload: LoginPayload): Promise<AuthSession> {
-    const response = await api.post<AuthSession>(ENDPOINTS.auth.login, payload);
+    const response = await api.post<AuthSession>(ENDPOINTS.auth.login, {
+      ...payload,
+      organizacionId: payload.organizacionId ?? env.organizacionId ?? undefined,
+    });
     return response.data;
   },
 

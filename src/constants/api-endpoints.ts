@@ -49,6 +49,8 @@ export const ENDPOINTS = {
   organizaciones: {
     base: '/comred/organizaciones',
     byId: (id: string) => `/comred/organizaciones/${id}`,
+    /** Bootstrap publico: marca + categorias. No requiere sesion. */
+    publica: (id: string) => `/comred/organizaciones/${id}/publica`,
   },
 
   catalogo: {
@@ -59,15 +61,6 @@ export const ENDPOINTS = {
     subcategoriaById: (id: string) => `/comred/catalogo/subcategorias/${id}`,
     subcategoriasDeUsuario: (usuarioId: string) =>
       `/comred/catalogo/usuarios/${usuarioId}/subcategorias`,
-  },
-
-  bodega: {
-    categorias: '/bodega/categoria',
-    categoriaById: (id: string) => `/bodega/categoria/${id}`,
-    insumos: '/bodega/insumo',
-    insumoById: (id: string) => `/bodega/insumo/${id}`,
-    movimientos: '/bodega/movimiento-insumo',
-    movimientosPorInsumo: (insumoId: string) => `/bodega/movimiento-insumo/${insumoId}`,
   },
 
   storage: {
