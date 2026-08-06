@@ -29,8 +29,4 @@ export const QUERY_KEYS = {
     publica: (id: string) => [...QUERY_KEYS.organizaciones.all, 'publica', id] as const,
   },
 
-  bodega: {
-    all: ['bodega'] as const,
-    insumos: (params?: PaginationParams) => [...QUERY_KEYS.bodega.all, 'insumos', params ?? {}] as const,
-  },
 } as const;

@@ -63,15 +63,6 @@ export const ENDPOINTS = {
       `/comred/catalogo/usuarios/${usuarioId}/subcategorias`,
   },
 
-  bodega: {
-    categorias: '/bodega/categoria',
-    categoriaById: (id: string) => `/bodega/categoria/${id}`,
-    insumos: '/bodega/insumo',
-    insumoById: (id: string) => `/bodega/insumo/${id}`,
-    movimientos: '/bodega/movimiento-insumo',
-    movimientosPorInsumo: (insumoId: string) => `/bodega/movimiento-insumo/${insumoId}`,
-  },
-
   storage: {
     upload: '/storage/upload',
     file: (categoria: string, nombre: string) => `/storage/${categoria}/${nombre}`,
