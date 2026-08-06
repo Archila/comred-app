@@ -1,40 +1,46 @@
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
- */
-
-import '@/global.css';
-
 import { Platform } from 'react-native';
 
+/**
+ * Valores crudos del tema.
+ *
+ * La fuente de verdad del estilo es `tailwind.config.js` (clases `className`).
+ * Este archivo solo existe para los casos donde React Native exige un color
+ * literal y no admite clases: navegacion, StatusBar, iconos SVG, gradientes.
+ * Si cambias un color aqui, cambialo tambien en tailwind.config.js.
+ */
 export const Colors = {
+  brand: {
+    500: '#208AEF',
+    600: '#146FCC',
+    700: '#1259A5',
+  },
   light: {
-    text: '#000000',
-    background: '#ffffff',
-    backgroundElement: '#F0F0F3',
-    backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
+    background: '#FFFFFF',
+    surface: '#F8FAFC',
+    border: '#E2E8F0',
+    text: '#0F172A',
+    textMuted: '#475569',
+    textSubtle: '#94A3B8',
+    danger: '#EF4444',
   },
   dark: {
-    text: '#ffffff',
-    background: '#000000',
-    backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
+    background: '#0B1220',
+    surface: '#111A2E',
+    border: '#1E293B',
+    text: '#E2E8F0',
+    textMuted: '#94A3B8',
+    textSubtle: '#64748B',
+    danger: '#EF4444',
   },
 } as const;
 
-export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
+export type ColorTheme = typeof Colors.light;
 
 export const Fonts = Platform.select({
   ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
     sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
     serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
     rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
     mono: 'ui-monospace',
   },
   default: {
@@ -51,15 +57,5 @@ export const Fonts = Platform.select({
   },
 });
 
-export const Spacing = {
-  half: 2,
-  one: 4,
-  two: 8,
-  three: 16,
-  four: 24,
-  five: 32,
-  six: 64,
-} as const;
-
-export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
+/** Ancho maximo del contenido en tablet / web. */
 export const MaxContentWidth = 800;
