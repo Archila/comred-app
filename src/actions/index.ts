@@ -7,4 +7,5 @@
  * Un action no importa React, ni el store, ni componentes.
  */
 export * from './auth';
+export * from './comred';
 export * from './usuarios';

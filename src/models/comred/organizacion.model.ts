@@ -19,3 +19,41 @@ export interface Organizacion {
   activo: boolean;
   created_at?: string;
 }
+
+/**
+ * Respuesta del bootstrap publico `GET /comred/organizaciones/:id/publica`.
+ *
+ * Es lo unico que la app puede leer antes de tener sesion: marca + arbol de
+ * categorias. No trae ningun dato sensible.
+ */
+export interface OrganizacionPublica {
+  id: string;
+  nombre: string;
+  codigo: string;
+  municipio: string;
+  departamento: string;
+  telefonoEmergencia?: string;
+  logoUrl?: string;
+  /** Color base de la marca. Ej: '#208AEF'. */
+  colorPrimario?: string;
+  /** Color de acento de la marca. */
+  colorSecundario?: string;
+  categorias: CategoriaPublica[];
+}
+
+export interface CategoriaPublica {
+  id: string;
+  nombre: string;
+  descripcion?: string;
+  /** Nombre del icono a pintar (mapeado a lucide en el cliente). */
+  icono?: string;
+  orden: number;
+  subcategorias: SubcategoriaPublica[];
+}
+
+export interface SubcategoriaPublica {
+  id: string;
+  nombre: string;
+  descripcion?: string;
+  orden: number;
+}

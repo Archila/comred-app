@@ -3,5 +3,6 @@
  * Aqui vive TanStack Query (cache, loading, error) y la lectura del store.
  */
 export * from './auth';
+export * from './comred';
 export * from './usuarios';
 export * from './use-color-scheme';

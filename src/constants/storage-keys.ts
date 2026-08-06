@@ -11,6 +11,12 @@ export const STORAGE_KEYS = {
   user: 'comred.auth.user',
   /** Preferencia de tema elegida por el usuario. */
   colorScheme: 'comred.ui.color-scheme',
+  /**
+   * Configuracion publica de la organizacion (marca + categorias).
+   * Se cachea para que la app arranque ya con los colores correctos, sin
+   * esperar a la red y sin parpadeo de marca.
+   */
+  organizacion: 'comred.org.publica',
 } as const;
 
 export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];

@@ -25,6 +25,8 @@ export const QUERY_KEYS = {
     list: (params?: PaginationParams) =>
       [...QUERY_KEYS.organizaciones.all, 'list', params ?? {}] as const,
     detail: (id: number | string) => [...QUERY_KEYS.organizaciones.all, 'detail', id] as const,
+    /** Bootstrap publico (marca + categorias) de una organizacion. */
+    publica: (id: string) => [...QUERY_KEYS.organizaciones.all, 'publica', id] as const,
   },
 
   bodega: {

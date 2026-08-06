@@ -61,7 +61,8 @@ src/
 │
 ├── actions/                    # Llamadas al API por dominio
 │   ├── auth/auth.actions.ts
-│   └── usuarios/usuarios.actions.ts   # plantilla de CRUD paginado
+│   ├── comred/organizaciones.actions.ts  # bootstrap público (marca)
+│   └── usuarios/usuarios.actions.ts      # plantilla de CRUD paginado
 │
 ├── api/
 │   ├── http-client.ts          # axios + Bearer + manejo de 401
@@ -79,6 +80,7 @@ src/
 │
 ├── store/                      # Zustand (estado de cliente)
 │   ├── auth.store.ts
+│   ├── organizacion.store.ts   # marca + tema derivado
 │   └── ui.store.ts
 │
 ├── components/
@@ -87,19 +89,61 @@ src/
 │   ├── feedback/               # Loading, Error, Empty
 │   └── common/
 │
-├── providers/                  # AppProviders → Query → Auth
+├── providers/                  # AppProviders → Query → Auth → Branding
 ├── config/env.ts               # Contrato tipado del .env
 ├── constants/                  # ENDPOINTS, QUERY_KEYS, STORAGE_KEYS, Colors
-├── lib/                        # secureStorage, cn, formato
+├── lib/                        # color/branding, secureStorage, cn, formato, url
 └── global.css                  # Directivas de Tailwind
 ```
 
+## Theming dinámico por organización
+
+Cada municipalidad tiene su propia marca (`logoUrl`, `colorPrimario`, `colorSecundario`)
+y el mismo código genera la app de todas. El color no está escrito en ningún componente.
+
+**Cómo funciona.** En `tailwind.config.js` los colores `primary` y `secondary` no son
+hex: son `rgb(var(--color-primary-500) / <alpha-value>)`. `BrandingProvider` inyecta
+esas variables con `vars()` de NativeWind sobre una `View` raíz, y todo el árbol las
+hereda. Escribir `bg-primary-500` en cualquier pantalla ya pinta el color de la muni.
+
+**De dos colores a una paleta.** El API solo guarda dos colores, pero los componentes
+usan una escala completa (`primary-50` … `primary-950`). [lib/color.ts](src/lib/color.ts)
+la genera mezclando el color base con blanco y negro. Además calcula
+`--color-primary-foreground` según la luminancia: si una muni configura un color claro,
+el texto del botón pasa de blanco a oscuro solo, sin quedar ilegible.
+
+**Secuencia de arranque:**
+
+1. El store inicia con la marca por defecto de COMRED (azul `#208AEF`).
+2. `hydrate()` lee del almacenamiento la última marca conocida → sin parpadeo de color.
+3. `useOrganizacionPublica()` llama a `GET /comred/organizaciones/:id/publica` y persiste
+   el resultado. El endpoint está limitado a 5 llamadas/minuto en el API, así que se
+   cachea 24 h y solo se reintenta una vez.
+
+**Qué organización es.** `useOrganizacionId()` resuelve en este orden:
+
+1. `user.organizacionId` de la sesión (dato autoritativo del API).
+2. `EXPO_PUBLIC_ORGANIZACION_ID` del build — es lo que permite que la pantalla de login
+   ya muestre el logo y los colores correctos, antes de que exista sesión. Cada perfil
+   de EAS Build define el suyo.
+
+Sin la variable la app arranca con la marca de COMRED y adopta la de la municipalidad
+al iniciar sesión.
+
+**Colores donde no llega `className`.** La tab bar, el `ActivityIndicator` y la
+`StatusBar` exigen un color literal. Para esos casos usa `useBrandColors()`, que
+devuelve los hex ya resueltos — nunca importes `Colors.brand`, que es solo el fallback.
+
+**Limitación conocida.** Los `Modal` de React Native se montan en una ventana aparte y
+no heredan las variables CSS. Si un modal necesita la marca, envuelve su contenido o
+usa `useBrandColors()`.
+
 ## Convenciones
 
-**Estilos.** Todo con `className`. Los colores literales solo se permiten donde React
-Native exige un valor crudo (navegación, `StatusBar`, `ActivityIndicator`) y salen de
-`constants/theme.ts`. La paleta viva está en `tailwind.config.js`; si cambias un color
-allí, refléjalo en `constants/theme.ts`.
+**Estilos.** Todo con `className`. Los colores de marca (`primary`, `secondary`) son
+dinámicos: se leen con clases o con `useBrandColors()`, nunca hardcodeados. Los colores
+neutros (superficies, texto, bordes) sí son fijos y viven en `tailwind.config.js`, con
+su espejo literal en `constants/theme.ts` para navegación y `StatusBar`.
 
 **Iconos.** Siempre por el wrapper `<Icon as={LucideIcon} />`, que traduce
 `className="text-primary-500"` al prop `color` que espera Lucide (vía `cssInterop`).

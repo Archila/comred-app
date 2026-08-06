@@ -49,6 +49,8 @@ export const ENDPOINTS = {
   organizaciones: {
     base: '/comred/organizaciones',
     byId: (id: string) => `/comred/organizaciones/${id}`,
+    /** Bootstrap publico: marca + categorias. No requiere sesion. */
+    publica: (id: string) => `/comred/organizaciones/${id}/publica`,
   },
 
   catalogo: {

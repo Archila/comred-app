@@ -2,8 +2,9 @@ import { Lock, User } from 'lucide-react-native';
 import { useState } from 'react';
 import { View } from 'react-native';
 
-import { Button, Input, Screen, Text } from '@/components';
+import { BrandLogo, Button, Input, Screen, Text } from '@/components';
 import { useLogin } from '@/hooks';
+import { useOrganizacion } from '@/store';
 
 /**
  * Pantalla de login.
@@ -16,6 +17,8 @@ import { useLogin } from '@/hooks';
  */
 export default function LoginScreen() {
   const { login, isPending, errorMessage, reset } = useLogin();
+  // Marca de la municipalidad de este build; null antes del primer bootstrap.
+  const organizacion = useOrganizacion();
 
   const [userName, setUserName] = useState('');
   const [password, setPassword] = useState('');
@@ -46,12 +49,14 @@ export default function LoginScreen() {
   return (
     <Screen scrollable avoidKeyboard contentClassName="justify-center gap-6 px-6">
       <View className="items-center gap-2">
-        <View className="h-16 w-16 items-center justify-center rounded-card bg-primary-500">
-          <Text className="text-2xl font-bold text-white">CR</Text>
-        </View>
-        <Text variant="title">COMRED</Text>
+        <BrandLogo size={72} />
+        <Text variant="title" className="text-center">
+          {organizacion?.nombre ?? 'COMRED'}
+        </Text>
         <Text variant="subtitle" className="text-center">
-          Ingresa con tu usuario institucional
+          {organizacion
+            ? `${organizacion.municipio}, ${organizacion.departamento}`
+            : 'Ingresa con tu usuario institucional'}
         </Text>
       </View>
 

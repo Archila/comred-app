@@ -5,14 +5,19 @@ import { Platform } from 'react-native';
  *
  * La fuente de verdad del estilo es `tailwind.config.js` (clases `className`).
  * Este archivo solo existe para los casos donde React Native exige un color
- * literal y no admite clases: navegacion, StatusBar, iconos SVG, gradientes.
- * Si cambias un color aqui, cambialo tambien en tailwind.config.js.
+ * literal y no admite clases: navegacion, StatusBar, ActivityIndicator.
+ *
+ * OJO con `brand`: es solo el FALLBACK de COMRED central. Los colores reales
+ * dependen de la organizacion, asi que en componentes hay que leerlos con
+ * `useBrandColors()` (hooks/comred), no importarlos de aqui.
  */
 export const Colors = {
+  /** Marca por defecto. Debe coincidir con los valores de `addBase` en tailwind.config.js. */
   brand: {
     500: '#208AEF',
-    600: '#146FCC',
-    700: '#1259A5',
+    600: '#1B75CB',
+    700: '#1661A7',
+    foreground: '#FFFFFF',
   },
   light: {
     background: '#FFFFFF',
