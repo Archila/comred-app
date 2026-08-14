@@ -17,6 +17,29 @@ export const STORAGE_KEYS = {
    * esperar a la red y sin parpadeo de marca.
    */
   organizacion: 'comred.org.publica',
+
+  /**
+   * UUID de esta instalacion, generado la primera vez que arranca la app.
+   *
+   * Es la identidad estable del dispositivo frente al API: mientras se
+   * conserve, re-registrar devuelve la misma fila en lugar de crear una nueva.
+   * Sobrevive a las actualizaciones de la app; se pierde al desinstalarla (y
+   * en iOS puede perderse al borrar el Keychain), lo que simplemente provoca
+   * un alta nueva.
+   */
+  instalacionId: 'comred.dispositivo.instalacion',
+  /**
+   * Registro devuelto por el API: id del dispositivo y organizacion a la que
+   * quedo vinculado. Su presencia es lo que hace que el arranque NO vuelva a
+   * llamar al endpoint de registro.
+   */
+  dispositivo: 'comred.dispositivo.registro',
+  /**
+   * Clave del dispositivo. El API la devuelve UNA sola vez al registrar y no
+   * hay forma de recuperarla: si se pierde, hay que re-registrar. Va aparte
+   * del registro para no arrastrar el secreto en cada lectura del id.
+   */
+  dispositivoClave: 'comred.dispositivo.clave',
 } as const;
 
 export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];

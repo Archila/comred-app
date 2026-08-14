@@ -39,6 +39,33 @@ export function getAuthToken(): string | null {
 }
 
 /* -------------------------------------------------------------------------- */
+/* Credenciales del dispositivo                                                */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * El dispositivo anonimo no tiene JWT: se autentica ante el API con el par
+ * `x-dispositivo-id` / `x-dispositivo-key` que recibio al registrarse.
+ *
+ * Es independiente de la sesion: sigue siendo valido con el usuario deslogueado,
+ * que es justo lo que necesitan las rutas de bandeja y token push. Lo mantiene
+ * sincronizado el store de dispositivo.
+ */
+interface DispositivoCredentials {
+  dispositivoId: string;
+  clave: string;
+}
+
+let dispositivoCredentials: DispositivoCredentials | null = null;
+
+export function setDispositivoCredentials(credentials: DispositivoCredentials | null): void {
+  dispositivoCredentials = credentials;
+}
+
+export function getDispositivoCredentials(): DispositivoCredentials | null {
+  return dispositivoCredentials;
+}
+
+/* -------------------------------------------------------------------------- */
 /* Callback de sesion expirada                                                 */
 /* -------------------------------------------------------------------------- */
 
@@ -73,6 +100,11 @@ httpClient.interceptors.request.use(async (config) => {
 
   if (authToken) {
     config.headers.Authorization = `Bearer ${authToken}`;
+  }
+
+  if (dispositivoCredentials) {
+    config.headers['x-dispositivo-id'] = dispositivoCredentials.dispositivoId;
+    config.headers['x-dispositivo-key'] = dispositivoCredentials.clave;
   }
 
   if (env.isDevelopment) {

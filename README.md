@@ -62,6 +62,7 @@ src/
 ├── actions/                    # Llamadas al API por dominio
 │   ├── auth/auth.actions.ts
 │   ├── comred/organizaciones.actions.ts  # bootstrap público (marca)
+│   ├── comred/dispositivos.actions.ts    # registro anónimo del dispositivo
 │   └── usuarios/usuarios.actions.ts      # plantilla de CRUD paginado
 │
 ├── api/
@@ -72,7 +73,7 @@ src/
 ├── models/                     # Interfaces del dominio
 │   ├── api/                    # ApiResponse, paginación
 │   ├── auth/                   # Usuario, Rol, Sucursal, sesión
-│   └── comred/                 # Organización
+│   └── comred/                 # Organización, Dispositivo
 │
 ├── hooks/                      # useQuery / useMutation por dominio
 │   ├── auth/
@@ -80,6 +81,7 @@ src/
 │
 ├── store/                      # Zustand (estado de cliente)
 │   ├── auth.store.ts
+│   ├── dispositivo.store.ts    # identidad del aparato (previa al login)
 │   ├── organizacion.store.ts   # marca + tema derivado
 │   └── ui.store.ts
 │
@@ -89,12 +91,47 @@ src/
 │   ├── feedback/               # Loading, Error, Empty
 │   └── common/
 │
-├── providers/                  # AppProviders → Query → Auth → Branding
+├── providers/                  # AppProviders → Query → Dispositivo → Auth → Branding
 ├── config/env.ts               # Contrato tipado del .env
 ├── constants/                  # ENDPOINTS, QUERY_KEYS, STORAGE_KEYS, Colors
-├── lib/                        # color/branding, secureStorage, cn, formato, url
+├── lib/                        # color/branding, secureStorage, deviceInfo, cn, formato, url
 └── global.css                  # Directivas de Tailwind
 ```
+
+## Registro del dispositivo
+
+El destinatario de una notificación no es una persona, es un aparato: FCM entrega a un
+token. Por eso el dispositivo tiene identidad propia y **se registra antes de pedir
+cualquier login** — un vecino que solo quiere recibir avisos no tiene por qué crear una
+cuenta.
+
+**Secuencia de arranque** (`DispositivoProvider` → `dispositivo.store.ts`):
+
+1. Lee `instalacionId` del almacenamiento seguro. Si no existe, genera un UUID v4 con
+   `expo-crypto` y lo persiste. Es la identidad estable del aparato: sobrevive a las
+   actualizaciones de la app y se pierde al desinstalarla.
+2. Lee el registro guardado (`dispositivoId` + `clave`). Si existe **y** su
+   `organizacionId` e `instalacionId` siguen coincidiendo, no toca la red y termina.
+3. Si falta cualquiera de las dos cosas, llama a `POST /comred/dispositivos/registro`.
+   El API es idempotente por `(organizacionId, instalacionId)`: reinstalar o re-registrar
+   actualiza la misma fila, nunca crea otra.
+4. Guarda la clave y el registro, y deja las credenciales en el cliente HTTP, que las
+   manda como `x-dispositivo-id` / `x-dispositivo-key`. Son independientes del JWT:
+   siguen valiendo con el usuario deslogueado.
+
+**La clave se entrega una sola vez.** El API guarda su bcrypt, no el original. Si se
+pierde, la única salida es volver a registrarse — y eso es exactamente lo que hace el
+paso 3, así que el fallo se autorepara en el siguiente arranque.
+
+**Si el registro falla**, el layout raíz no monta el stack de navegación y muestra
+`DispositivoErrorScreen` con un botón de reintento. Es un muro deliberado: dejar pasar
+al login daría la falsa impresión de que la app está operativa cuando no recibiría
+ningún aviso. El endpoint está limitado a 3 llamadas/minuto, así que reintentar en
+bucle acaba en 429 (la pantalla lo traduce a un mensaje legible).
+
+**Sin `EXPO_PUBLIC_ORGANIZACION_ID`** no hay a qué organización registrarse: el store
+queda en `unavailable`, la app arranca igual y avisa por consola. Ese build no recibirá
+notificaciones hasta que la variable esté puesta.
 
 ## Theming dinámico por organización
 

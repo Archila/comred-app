@@ -1,23 +1,18 @@
 /**
- * Utilidades de formato para Guatemala (es-GT).
+ * Utilidades de formato para mostrar fechas en hora de Guatemala (es-GT).
  *
- * El API devuelve las fechas ya convertidas a hora de Guatemala en dos
- * formatos: `DD/MM/YYYY HH:mm:ss` (envoltorio) y `YYYY-MM-DDTHH:mm:ss`
- * (campos de las entidades). `parseApiDate` soporta ambos.
+ * El API siempre devuelve las fechas en UTC como texto ISO 8601 (sufijo
+ * `Z`), sin importar en qué zona horaria corran el servidor o la base de
+ * datos. `parseApiDate` las interpreta como el instante absoluto que son;
+ * `formatDate`/`formatDateTime` las muestran fijas en hora de Guatemala,
+ * sin importar la zona horaria configurada en el dispositivo del usuario.
  */
 
 const LOCALE = 'es-GT';
+const TIME_ZONE = 'America/Guatemala';
 
 export function parseApiDate(value?: string | null): Date | null {
   if (!value) return null;
-
-  // Formato del envoltorio: DD/MM/YYYY HH:mm:ss
-  const match = value.match(/^(\d{2})\/(\d{2})\/(\d{4})[ T](\d{2}):(\d{2}):(\d{2})$/);
-  if (match) {
-    const [, dd, mm, yyyy, hh, mi, ss] = match;
-    return new Date(Number(yyyy), Number(mm) - 1, Number(dd), Number(hh), Number(mi), Number(ss));
-  }
-
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
@@ -26,6 +21,7 @@ export function formatDate(value?: string | Date | null): string {
   const date = value instanceof Date ? value : parseApiDate(value);
   if (!date) return '';
   return new Intl.DateTimeFormat(LOCALE, {
+    timeZone: TIME_ZONE,
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
@@ -36,6 +32,7 @@ export function formatDateTime(value?: string | Date | null): string {
   const date = value instanceof Date ? value : parseApiDate(value);
   if (!date) return '';
   return new Intl.DateTimeFormat(LOCALE, {
+    timeZone: TIME_ZONE,
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',

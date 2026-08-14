@@ -53,6 +53,11 @@ export const ENDPOINTS = {
     publica: (id: string) => `/comred/organizaciones/${id}/publica`,
   },
 
+  dispositivos: {
+    /** Alta anonima del dispositivo. Publica: se llama antes de cualquier login. */
+    registro: '/comred/dispositivos/registro',
+  },
+
   catalogo: {
     arbol: '/comred/catalogo/arbol',
     categorias: '/comred/catalogo/categorias',
