@@ -56,6 +56,10 @@ export const ENDPOINTS = {
   dispositivos: {
     /** Alta anonima del dispositivo. Publica: se llama antes de cualquier login. */
     registro: '/comred/dispositivos/registro',
+    /** Actualiza el token FCM. Se autentica con las cabeceras del dispositivo. */
+    token: '/comred/dispositivos/token',
+    /** Cierra en el servidor la sesion abierta en este aparato. */
+    logout: '/comred/dispositivos/logout',
   },
 
   catalogo: {

@@ -20,9 +20,13 @@ React Native + Expo, consumiendo el API NestJS de `api-comred`.
 
 ```bash
 npm install
-cp .env.example .env      # ajustar EXPO_PUBLIC_API_URL
+cp .env.example .env      # ajustar EXPO_PUBLIC_API_URL y EXPO_PUBLIC_ORGANIZACION_ID
 npx expo start --clear    # --clear es obligatorio tras tocar .env o tailwind.config.js
 ```
+
+`EXPO_PUBLIC_ORGANIZACION_ID` es **obligatoria** y debe ser un UUID: el API la exige
+para registrar el dispositivo, iniciar sesión y renovar el token. Sin ella la app no
+arranca y muestra el error de `src/config/env.ts`.
 
 `EXPO_PUBLIC_API_URL` debe apuntar al API con su prefijo de versión (`/v1`):
 
@@ -129,9 +133,35 @@ al login daría la falsa impresión de que la app está operativa cuando no reci
 ningún aviso. El endpoint está limitado a 3 llamadas/minuto, así que reintentar en
 bucle acaba en 429 (la pantalla lo traduce a un mensaje legible).
 
-**Sin `EXPO_PUBLIC_ORGANIZACION_ID`** no hay a qué organización registrarse: el store
-queda en `unavailable`, la app arranca igual y avisa por consola. Ese build no recibirá
-notificaciones hasta que la variable esté puesta.
+**Token de notificaciones.** Cuando la app obtenga su token FCM (pendiente del
+development build con RNFirebase), lo envía con `PUT /comred/dispositivos/token`.
+FCM lo rota por su cuenta —reinstalar, restaurar una copia, limpiar datos—, así
+que hay que avisar al API cada vez que cambia: si no, el servidor seguiría
+enviando a un token muerto y el teléfono se quedaría mudo sin que nadie lo note.
+Si el usuario revoca el permiso, se manda `pushToken: null` y
+`notificacionesActivas: false`. La ruta no necesita sesión: viaja con las
+cabeceras del dispositivo.
+
+**Vinculación con la sesión.** Al iniciar sesión, `authActions.login` envía
+`dispositivoId` + `dispositivoKey` y el API vincula el aparato al usuario (y desvincula
+a quien lo tuviera antes). A partir de ahí recibe también los mensajes dirigidos a la
+organización, categoría o subcategoría del usuario. Si el API no acepta las
+credenciales, el login **no falla**: responde `dispositivoVinculado: false` y el
+aparato sigue recibiendo solo los avisos generales.
+
+## Sesión
+
+- El login envía `organizacionId` (la del build) y `cliente`: `MOVIL` en nativo, que
+  recibe un token de 30 días guardado cifrado; `WEB` en navegador, donde el token vive
+  en `localStorage` sin cifrar y recibe la vigencia corta del panel.
+- Al abrir la app, `verify-token` envía el token guardado **y la organización del
+  build**. El API solo lo renueva si fue emitido para esa organización; si responde
+  401, la sesión se cierra y se vuelve al login.
+- Al cerrar sesión, `useLogout` llama antes a `POST /comred/dispositivos/logout`
+  para que el API desvincule el aparato; sin eso el teléfono seguiría recibiendo
+  los mensajes dirigidos a alguien que ya se fue. Si esa llamada falla, el logout
+  local se hace igual: quedarse atrapado dentro de la app por falta de red sería
+  peor, y el vínculo se corrige en el siguiente inicio de sesión.
 
 ## Theming dinámico por organización
 
@@ -164,8 +194,9 @@ el texto del botón pasa de blanco a oscuro solo, sin quedar ilegible.
    ya muestre el logo y los colores correctos, antes de que exista sesión. Cada perfil
    de EAS Build define el suyo.
 
-Sin la variable la app arranca con la marca de COMRED y adopta la de la municipalidad
-al iniciar sesión.
+Como el login y el token están atados a la organización del build, ambas coinciden.
+La marca de COMRED solo se ve en el primer arranque, hasta que responde el endpoint
+público.
 
 **Colores donde no llega `className`.** La tab bar, el `ActivityIndicator` y la
 `StatusBar` exigen un color literal. Para esos casos usa `useBrandColors()`, que

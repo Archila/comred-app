@@ -40,6 +40,31 @@ export interface RegistroDispositivoResponse {
   creado: boolean;
 }
 
+/** Cuerpo de `PUT /comred/dispositivos/token`. */
+export interface ActualizarTokenRequest {
+  /**
+   * Token FCM. `null` lo borra en el servidor: es lo que se manda cuando el
+   * usuario revoca el permiso de notificaciones, para que no se intenten
+   * entregas que no van a llegar.
+   */
+  pushToken?: string | null;
+  /** Permiso de notificaciones tal como esta hoy en el sistema operativo. */
+  notificacionesActivas?: boolean;
+}
+
+/** Respuesta de `PUT /comred/dispositivos/token`. */
+export interface ActualizarTokenResponse {
+  dispositivoId: string;
+  tienePushToken: boolean;
+  notificacionesActivas: boolean;
+}
+
+/** Respuesta de `POST /comred/dispositivos/logout`. */
+export interface CerrarSesionResponse {
+  /** Cuantas sesiones activas habia en el aparato (0 o 1). */
+  sesionesCerradas: number;
+}
+
 /**
  * Lo que la app persiste del registro, sin el secreto.
  *
