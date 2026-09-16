@@ -25,12 +25,6 @@ export type DispositivoStatus =
   | 'checking'
   /** Hay un dispositivo vinculado a la organizacion de este build. */
   | 'registered'
-  /**
-   * El build no trae `EXPO_PUBLIC_ORGANIZACION_ID`, asi que no hay a que
-   * organizacion registrarse. No es un error: la app sigue funcionando, pero
-   * este dispositivo no recibira notificaciones hasta que el build lo declare.
-   */
-  | 'unavailable'
   /** El registro fallo (red o API). La app no continua hasta reintentar. */
   | 'error';
 
@@ -116,16 +110,8 @@ async function resolver(
 ): Promise<void> {
   set({ status: 'checking', error: null });
 
+  // Obligatorio: `config/env.ts` impide arrancar un build sin organizacion.
   const { organizacionId } = env;
-
-  if (!organizacionId) {
-    console.warn(
-      '[dispositivo] EXPO_PUBLIC_ORGANIZACION_ID no esta definido: el dispositivo ' +
-        'no se registrara y no recibira notificaciones.',
-    );
-    set({ status: 'unavailable', dispositivo: null });
-    return;
-  }
 
   try {
     const instalacionId = await obtenerInstalacionId();

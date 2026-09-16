@@ -2,8 +2,9 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { authActions } from '@/actions';
 import { getErrorMessage } from '@/api';
+import { env } from '@/config';
 import { useAuthStore } from '@/store';
-import type { AuthSession, LoginPayload } from '@/models';
+import type { LoginPayload, LoginResponse } from '@/models';
 
 /**
  * Login del usuario.
@@ -15,9 +16,15 @@ export function useLogin() {
   const setSession = useAuthStore((state) => state.setSession);
   const queryClient = useQueryClient();
 
-  const mutation = useMutation<AuthSession, unknown, LoginPayload>({
+  const mutation = useMutation<LoginResponse, unknown, LoginPayload>({
     mutationFn: (payload) => authActions.login(payload),
-    onSuccess: async (session) => {
+    onSuccess: async ({ dispositivoVinculado, ...session }) => {
+      // La sesion vale igual: el API no bloquea el login por el vinculo. Pero
+      // sin el, el aparato solo recibe avisos generales, y conviene verlo.
+      if (!dispositivoVinculado && env.isDevelopment) {
+        console.warn('[login] El dispositivo no quedo vinculado al usuario en el API.');
+      }
+
       await setSession(session);
       // Sesion nueva: se descarta la cache del usuario anterior.
       queryClient.clear();

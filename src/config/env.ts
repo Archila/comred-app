@@ -33,22 +33,33 @@ const apiUrl = required(process.env.EXPO_PUBLIC_API_URL, 'EXPO_PUBLIC_API_URL').
 
 const environment = (process.env.EXPO_PUBLIC_ENV ?? 'development') as AppEnvironment;
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 /**
  * UUID de la organizacion (municipalidad) para la que se compila este build.
  *
- * Es opcional a proposito: si no viene, la app arranca con la marca por
- * defecto de COMRED central y adopta la marca real en cuanto el usuario
- * inicia sesion (se toma de `user.organizacionId`). Con la variable puesta,
- * la marca correcta ya se ve en la pantalla de login.
+ * Obligatoria: el API la exige para registrar el dispositivo, para el login
+ * (`userName` solo es unico dentro de una organizacion) y para renovar el
+ * token. Un build sin ella no podria hacer ninguna de las tres cosas, asi que
+ * es preferible que no arranque a que parezca operativo sin serlo.
  */
-const organizacionId = process.env.EXPO_PUBLIC_ORGANIZACION_ID?.trim() || null;
+const organizacionId = required(
+  process.env.EXPO_PUBLIC_ORGANIZACION_ID,
+  'EXPO_PUBLIC_ORGANIZACION_ID',
+);
+
+if (!UUID.test(organizacionId)) {
+  throw new Error(
+    `[env] EXPO_PUBLIC_ORGANIZACION_ID no es un UUID valido: "${organizacionId}".`,
+  );
+}
 
 export const env = {
   /** Ej: `http://192.168.0.10:3000/v1` */
   apiUrl,
   /** Entorno logico de la app. */
   environment,
-  /** UUID de la organizacion embebido en el build, o `null`. */
+  /** UUID de la organizacion embebido en el build. */
   organizacionId,
   /** Timeout de las peticiones HTTP en milisegundos. */
   apiTimeout: toNumber(process.env.EXPO_PUBLIC_API_TIMEOUT, 20_000),
