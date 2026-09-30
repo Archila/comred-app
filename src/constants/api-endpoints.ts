@@ -60,6 +60,15 @@ export const ENDPOINTS = {
     token: '/comred/dispositivos/token',
     /** Cierra en el servidor la sesion abierta en este aparato. */
     logout: '/comred/dispositivos/logout',
+    /**
+     * Bandeja de entrada del aparato: la fuente de verdad de lo que se le ha
+     * enviado. El push no lo es, asi que se sincroniza en cada
+     * `AppState -> active`.
+     */
+    mensajes: '/comred/dispositivos/mensajes',
+    /** Acuse de recibo. El id es el del MENSAJE, el que viaja en el push. */
+    marcarLeido: (mensajeId: string) =>
+      `/comred/dispositivos/mensajes/${mensajeId}/leido`,
   },
 
   catalogo: {

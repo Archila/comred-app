@@ -1,4 +1,4 @@
-import type { PaginationParams } from '@/models';
+import type { BandejaParams, PaginationParams } from '@/models';
 
 /**
  * Claves de cache de TanStack Query centralizadas.
@@ -18,6 +18,16 @@ export const QUERY_KEYS = {
     all: ['usuarios'] as const,
     list: (params?: PaginationParams) => [...QUERY_KEYS.usuarios.all, 'list', params ?? {}] as const,
     detail: (id: number | string) => [...QUERY_KEYS.usuarios.all, 'detail', id] as const,
+  },
+
+  /**
+   * Bandeja del dispositivo. La invalidacion va SIEMPRE por `all`: el contador
+   * de no leidos viaja en la metadata de cualquier consulta, asi que invalidar
+   * solo la pagina visible dejaria el icono desfasado.
+   */
+  bandeja: {
+    all: ['bandeja'] as const,
+    list: (params?: BandejaParams) => [...QUERY_KEYS.bandeja.all, 'list', params ?? {}] as const,
   },
 
   organizaciones: {
