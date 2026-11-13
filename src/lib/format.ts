@@ -41,6 +41,11 @@ export function formatDateTime(value?: string | Date | null): string {
   }).format(date);
 }
 
+/** Cantidad con separador de miles de Guatemala. Ej: 1243 -> "1,243". */
+export function formatNumber(value: number): string {
+  return new Intl.NumberFormat(LOCALE).format(value);
+}
+
 /** Iniciales para el avatar por defecto. Ej: "Juan Perez" -> "JP". */
 export function getInitials(fullName?: string): string {
   if (!fullName) return '';

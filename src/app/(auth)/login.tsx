@@ -1,10 +1,18 @@
+import { Image } from 'expo-image';
 import { Lock, User } from 'lucide-react-native';
 import { useState } from 'react';
 import { View } from 'react-native';
 
-import { BrandLogo, Button, Input, Screen, Text } from '@/components';
+import { Button, Input, Screen, Text } from '@/components';
 import { useLogin } from '@/hooks';
+import { getVersionApp } from '@/lib';
 import { useOrganizacion } from '@/store';
+
+// Constante del binario: no cambia mientras la app esta abierta.
+const VERSION_APP = getVersionApp();
+
+// Logo empaquetado en el binario: se ve aun sin red ni bootstrap previo.
+const LOGO_MUNI = require('../../../assets/images/logo-muni.jpeg');
 
 /**
  * Pantalla de login.
@@ -49,7 +57,16 @@ export default function LoginScreen() {
   return (
     <Screen scrollable avoidKeyboard contentClassName="justify-center gap-6 px-6">
       <View className="items-center gap-2">
-        <BrandLogo size={72} />
+        {/* Fondo blanco circular: el JPEG trae fondo blanco y asi no se ve un
+            recuadro en modo oscuro. */}
+        <View className="mb-2 h-24 w-24 items-center justify-center overflow-hidden rounded-full border border-line bg-white shadow-sm dark:border-line-dark">
+          <Image
+            source={LOGO_MUNI}
+            style={{ width: 88, height: 88 }}
+            contentFit="contain"
+            accessibilityLabel={organizacion?.nombre ?? 'Logo de la municipalidad'}
+          />
+        </View>
         <Text variant="title" className="text-center">
           {organizacion?.nombre ?? 'COMRED'}
         </Text>
@@ -104,6 +121,13 @@ export default function LoginScreen() {
       <Text variant="caption" className="text-center">
         Sistema de Coordinacion Municipal para la Reduccion de Desastres
       </Text>
+
+      {/* Para saber que version tiene cada telefono al dar soporte. */}
+      {VERSION_APP.length > 0 && (
+        <Text variant="caption" className="text-center" selectable>
+          {VERSION_APP}
+        </Text>
+      )}
     </Screen>
   );
 }

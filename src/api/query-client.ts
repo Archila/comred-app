@@ -24,9 +24,9 @@ export function createQueryClient(): QueryClient {
           return failureCount < 2;
         },
         retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 8000),
-        // En React Native no existe el evento `focus` del navegador; el
-        // refetch al volver del background se maneja con AppState si se
-        // necesita, no automaticamente.
+        // `QueryProvider` traduce `AppState -> active` a foco. Apagado por
+        // defecto para no recargar todo al volver del background; la query
+        // que lo necesite (la bandeja) lo enciende por su cuenta.
         refetchOnWindowFocus: false,
       },
       mutations: {

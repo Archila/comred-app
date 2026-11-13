@@ -1,4 +1,5 @@
 import * as Application from 'expo-application';
+import Constants from 'expo-constants';
 import * as Crypto from 'expo-crypto';
 import * as Device from 'expo-device';
 import { Platform } from 'react-native';
@@ -45,6 +46,24 @@ function getIdioma(): string | undefined {
   } catch {
     return undefined;
   }
+}
+
+/**
+ * Version instalada en este telefono, para mostrarla en pantalla. Ej: "v1.0.0 (1)".
+ *
+ * Sale del binario (`versionName` y `versionCode` en Android), no del
+ * `app.json`: lo que interesa saber es que APK tiene cada telefono, y el JS
+ * puede venir mas nuevo desde Metro sin que cambie el binario. El numero
+ * entre parentesis distingue dos compilaciones de la misma version.
+ *
+ * En web no hay binario: se usa la version del `app.json`.
+ */
+export function getVersionApp(): string {
+  const version = Application.nativeApplicationVersion ?? Constants.expoConfig?.version;
+  if (!version) return '';
+
+  const build = Application.nativeBuildVersion;
+  return build ? `v${version} (${build})` : `v${version}`;
 }
 
 export interface DeviceInfo {

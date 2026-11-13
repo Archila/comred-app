@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { bandejaActions } from '@/actions';
 import { QUERY_KEYS } from '@/constants';
@@ -21,6 +21,25 @@ export function useBandeja(params: BandejaParams = {}) {
   return useQuery<BandejaResult>({
     queryKey: QUERY_KEYS.bandeja.list(params),
     queryFn: () => bandejaActions.list(params),
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+  });
+}
+
+/**
+ * Bandeja paginada para la pantalla de avisos. Misma politica de refresco que
+ * `useBandeja`, y por la misma razon.
+ *
+ * Al refrescar, TanStack vuelve a pedir todas las paginas ya cargadas en
+ * orden: con el limite de 30/min del API conviene no subir mucho de 2-3
+ * paginas por sesion, y por eso el tamano de pagina es generoso.
+ */
+export function useBandejaInfinita(params: Omit<BandejaParams, 'page'> = {}) {
+  return useInfiniteQuery({
+    queryKey: QUERY_KEYS.bandeja.infinita(params),
+    queryFn: ({ pageParam }) => bandejaActions.list({ ...params, page: pageParam }),
+    initialPageParam: 1,
+    getNextPageParam: (ultima) => (ultima.hasNextPage ? ultima.page + 1 : undefined),
     staleTime: 0,
     refetchOnWindowFocus: true,
   });

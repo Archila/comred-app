@@ -38,6 +38,12 @@ interface DispositivoState {
   bootstrap: () => Promise<void>;
   /** Fuerza un registro nuevo aunque ya hubiera uno guardado. */
   reintentar: () => Promise<void>;
+  /**
+   * Registro nuevo sin pasar por `checking`, para cuando el API rechaza unas
+   * credenciales con la app ya en marcha. `checking` haria que el navegador
+   * raiz desmontara todas las pantallas por algo que el usuario no causo.
+   */
+  renovarCredenciales: () => Promise<void>;
 }
 
 /**
@@ -106,9 +112,9 @@ async function registrarEnApi(
 /** Nucleo compartido por `bootstrap` y `reintentar`. */
 async function resolver(
   set: (partial: Partial<DispositivoState>) => void,
-  { forzarRegistro }: { forzarRegistro: boolean },
+  { forzarRegistro, silencioso = false }: { forzarRegistro: boolean; silencioso?: boolean },
 ): Promise<void> {
-  set({ status: 'checking', error: null });
+  if (!silencioso) set({ status: 'checking', error: null });
 
   // Obligatorio: `config/env.ts` impide arrancar un build sin organizacion.
   const { organizacionId } = env;
@@ -147,6 +153,8 @@ export const useDispositivoStore = create<DispositivoState>((set) => ({
   bootstrap: () => resolver(set, { forzarRegistro: false }),
 
   reintentar: () => resolver(set, { forzarRegistro: true }),
+
+  renovarCredenciales: () => resolver(set, { forzarRegistro: true, silencioso: true }),
 }));
 
 /* -------------------------------------------------------------------------- */

@@ -1,4 +1,4 @@
-import type { BandejaParams, PaginationParams } from '@/models';
+import type { BandejaParams, EnviosParams, HistorialParams, PaginationParams } from '@/models';
 
 /**
  * Claves de cache de TanStack Query centralizadas.
@@ -28,6 +28,22 @@ export const QUERY_KEYS = {
   bandeja: {
     all: ['bandeja'] as const,
     list: (params?: BandejaParams) => [...QUERY_KEYS.bandeja.all, 'list', params ?? {}] as const,
+    infinita: (params?: Omit<BandejaParams, 'page'>) =>
+      [...QUERY_KEYS.bandeja.all, 'infinita', params ?? {}] as const,
+  },
+
+  /**
+   * Envio de avisos. No hace falta el id del usuario en la llave: login y
+   * logout vacian la cache entera.
+   */
+  mensajes: {
+    all: ['mensajes'] as const,
+    capacidades: () => [...QUERY_KEYS.mensajes.all, 'capacidades'] as const,
+    historial: (params?: Omit<HistorialParams, 'page'>) =>
+      [...QUERY_KEYS.mensajes.all, 'historial', params ?? {}] as const,
+    detalle: (id: string) => [...QUERY_KEYS.mensajes.all, 'detalle', id] as const,
+    envios: (id: string, params?: Omit<EnviosParams, 'page'>) =>
+      [...QUERY_KEYS.mensajes.all, 'envios', id, params ?? {}] as const,
   },
 
   organizaciones: {

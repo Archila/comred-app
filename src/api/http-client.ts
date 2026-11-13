@@ -1,7 +1,7 @@
-import axios, { type AxiosRequestConfig, type AxiosInstance } from 'axios';
+import axios, { isAxiosError, type AxiosRequestConfig, type AxiosInstance } from 'axios';
 
 import { env } from '@/config';
-import { STORAGE_KEYS } from '@/constants';
+import { ENDPOINTS, STORAGE_KEYS } from '@/constants';
 import { secureStorage } from '@/lib';
 import type { ApiResponse } from '@/models';
 
@@ -14,7 +14,8 @@ import { toApiException } from './api-error';
  *   1. Base URL y timeout desde `.env`.
  *   2. Inyectar el header `Authorization: Bearer <token>`.
  *   3. Normalizar cualquier error a `ApiException`.
- *   4. Avisar al store de sesion cuando el API responde 401.
+ *   4. Avisar al store de sesion cuando el API responde 401, o al de
+ *      dispositivo si el 401 viene de una ruta del aparato.
  *
  * Las pantallas NUNCA importan este archivo: solo lo usan los `actions`.
  */
@@ -81,6 +82,25 @@ export function setUnauthorizedHandler(handler: UnauthorizedHandler | null): voi
   onUnauthorized = handler;
 }
 
+let onDispositivoRechazado: UnauthorizedHandler | null = null;
+
+/**
+ * Registra que hacer cuando el API rechaza las credenciales del DISPOSITIVO.
+ *
+ * Es otro 401 y no se trata igual: las rutas del aparato no miran el JWT, asi
+ * que cerrar sesion no arreglaria nada —el usuario saldria en cada arranque— y
+ * el telefono seguiria sin recibir avisos. Lo que hay que hacer es volver a
+ * registrar el aparato. Lo conecta `DispositivoProvider`.
+ */
+export function setDispositivoRechazadoHandler(handler: UnauthorizedHandler | null): void {
+  onDispositivoRechazado = handler;
+}
+
+function esRutaDeDispositivo(error: unknown): boolean {
+  const url = isAxiosError(error) ? error.config?.url : undefined;
+  return url?.startsWith(`${ENDPOINTS.dispositivos.base}/`) ?? false;
+}
+
 /* -------------------------------------------------------------------------- */
 /* Instancia de axios                                                          */
 /* -------------------------------------------------------------------------- */
@@ -120,8 +140,12 @@ httpClient.interceptors.response.use(
     const exception = toApiException(error);
 
     if (exception.isUnauthorized) {
-      authToken = null;
-      onUnauthorized?.();
+      if (esRutaDeDispositivo(error)) {
+        onDispositivoRechazado?.();
+      } else {
+        authToken = null;
+        onUnauthorized?.();
+      }
     }
 
     if (env.isDevelopment) {

@@ -52,6 +52,9 @@ export function Input({
   const [isFocused, setIsFocused] = useState(false);
 
   const hasError = Boolean(error);
+  // Multilinea: el campo crece con el texto en vez de quedarse en la altura de
+  // un control, y el texto arranca arriba (Android lo centra por defecto).
+  const multiline = Boolean(props.multiline);
 
   return (
     <View className={cn('w-full gap-1.5', containerClassName)}>
@@ -59,7 +62,8 @@ export function Input({
 
       <View
         className={cn(
-          'h-control flex-row items-center gap-2 rounded-field border bg-surface px-3',
+          'flex-row gap-2 rounded-field border bg-surface px-3',
+          multiline ? 'min-h-32 items-start py-3' : 'h-control items-center',
           'dark:bg-surface-dark-muted',
           hasError
             ? 'border-danger-500'
@@ -75,9 +79,11 @@ export function Input({
 
         <TextInput
           className={cn(
-            'h-full flex-1 text-base text-content dark:text-content-dark-default',
+            'flex-1 text-base text-content dark:text-content-dark-default',
+            multiline ? 'min-h-24' : 'h-full',
             className,
           )}
+          textAlignVertical={multiline ? 'top' : undefined}
           placeholderTextColor={palette.textSubtle}
           secureTextEntry={isSecure}
           editable={editable}

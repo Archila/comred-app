@@ -54,6 +54,12 @@ export const ENDPOINTS = {
   },
 
   dispositivos: {
+    /**
+     * Raiz de las rutas que se autentican con las cabeceras del dispositivo y
+     * no con el JWT. El cliente HTTP la usa para no confundir un 401 de estas
+     * rutas con una sesion caducada.
+     */
+    base: '/comred/dispositivos',
     /** Alta anonima del dispositivo. Publica: se llama antes de cualquier login. */
     registro: '/comred/dispositivos/registro',
     /** Actualiza el token FCM. Se autentica con las cabeceras del dispositivo. */
@@ -69,6 +75,20 @@ export const ENDPOINTS = {
     /** Acuse de recibo. El id es el del MENSAJE, el que viaja en el push. */
     marcarLeido: (mensajeId: string) =>
       `/comred/dispositivos/mensajes/${mensajeId}/leido`,
+  },
+
+  mensajes: {
+    /** POST: alta del aviso (202, el reparto ocurre despues). GET: historial. */
+    base: '/comred/mensajes',
+    byId: (id: string) => `/comred/mensajes/${id}`,
+    /** Entrega telefono por telefono. Exige `MSG_AUDITORIA`. */
+    envios: (id: string) => `/comred/mensajes/${id}/envios`,
+    /** Reanuda un envio a medias sin repetirselo a quien ya lo recibio. */
+    reintentar: (id: string) => `/comred/mensajes/${id}/reintentar`,
+    /** Cuantos telefonos alcanzaria, sin enviar nada. */
+    preview: '/comred/mensajes/preview',
+    /** Que alcances y destinos puede usar el usuario de la sesion. */
+    capacidades: '/comred/mensajes/capacidades',
   },
 
   catalogo: {
