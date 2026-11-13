@@ -3,6 +3,7 @@ import { Platform } from 'react-native';
 import { api, getDispositivoCredentials } from '@/api';
 import { env } from '@/config';
 import { ENDPOINTS } from '@/constants';
+import { getVersionCodigo } from '@/lib';
 import type {
   AuthSession,
   LoginPayload,
@@ -34,11 +35,14 @@ export const authActions = {
    */
   async login(payload: LoginPayload): Promise<LoginResponse> {
     const dispositivo = getDispositivoCredentials();
+    const appVersion = getVersionCodigo();
 
     const body: LoginRequest = {
       ...payload,
       organizacionId: env.organizacionId,
       cliente: Platform.OS === 'web' ? 'WEB' : 'MOVIL',
+      // El API rechaza un binario por debajo de la minima de la organizacion.
+      ...(appVersion !== null && { appVersion }),
       ...(dispositivo && {
         dispositivoId: dispositivo.dispositivoId,
         dispositivoKey: dispositivo.clave,

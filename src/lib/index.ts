@@ -6,3 +6,4 @@ export * from './format';
 export * from './notificaciones';
 export * from './secure-storage';
 export * from './url';
+export * from './version-app';

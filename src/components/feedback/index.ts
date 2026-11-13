@@ -1,3 +1,4 @@
+export * from './actualizacion-obligatoria-screen';
 export * from './dispositivo-error-screen';
 export * from './empty-state';
 export * from './error-state';

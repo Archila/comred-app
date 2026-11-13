@@ -25,6 +25,11 @@ export interface LoginRequest extends LoginPayload {
   /** `userName` solo es unico dentro de una organizacion: es obligatoria. */
   organizacionId: string;
   cliente: ClienteAuth;
+  /**
+   * `versionCode` del binario. El API rechaza con 426 un cliente MOVIL por
+   * debajo de la version minima de su organizacion. En web no se envia.
+   */
+  appVersion?: number;
   /** Van en pareja. Vinculan el dispositivo a la sesion en el API. */
   dispositivoId?: string;
   dispositivoKey?: string;

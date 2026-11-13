@@ -41,6 +41,21 @@ export interface OrganizacionPublica {
   categorias: CategoriaPublica[];
 }
 
+/**
+ * Respuesta de `GET /comred/organizaciones/:id/version`.
+ *
+ * Los numeros son el `versionCode` del binario (1.0.1 -> 10001). `null` =
+ * la organizacion no tiene ese control configurado.
+ */
+export interface VersionOrganizacion {
+  /** Por debajo de esta, la app obliga a actualizar y el API rechaza el login. */
+  versionMinima: number | null;
+  /** Ultimo APK publicado. Por debajo, la app solo avisa. */
+  versionUltima: number | null;
+  /** Donde descargar la version nueva. `null` si el API no tiene enlace. */
+  urlActualizacion: string | null;
+}
+
 export interface CategoriaPublica {
   id: string;
   nombre: string;

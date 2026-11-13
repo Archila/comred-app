@@ -6,7 +6,8 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
 
-import { DispositivoErrorScreen } from '@/components';
+import { ActualizacionObligatoriaScreen, DispositivoErrorScreen } from '@/components';
+import { useAvisoActualizacion, useVersionApp } from '@/hooks';
 import { AppProviders } from '@/providers';
 import { useAuthStatus, useDispositivoStatus } from '@/store';
 
@@ -45,6 +46,11 @@ function RootNavigator() {
   const isAuthenticated = status === 'authenticated';
   const isArrancando = isCheckingDispositivo || isCheckingSession;
 
+  // No se espera a esta consulta para quitar el splash: sin red la app tiene
+  // que abrir igual. Cuando responde, avisa o levanta el muro.
+  const versionApp = useVersionApp();
+  useAvisoActualizacion(versionApp, !isArrancando);
+
   useEffect(() => {
     if (!isArrancando) {
       void SplashScreen.hideAsync();
@@ -56,6 +62,18 @@ function RootNavigator() {
   // Mientras se resuelve el dispositivo y se restaura la sesion seguimos
   // mostrando el splash nativo.
   if (isArrancando) return null;
+
+  // Binario por debajo de la version minima: no se ofrece ni el login, con o
+  // sin sesion abierta. Va antes que el error de dispositivo porque un APK
+  // obsoleto puede ser justo la causa de que el registro falle.
+  if (versionApp.estado === 'OBLIGATORIA') {
+    return (
+      <ThemeProvider value={theme}>
+        <StatusBar style="auto" />
+        <ActualizacionObligatoriaScreen urlActualizacion={versionApp.urlActualizacion} />
+      </ThemeProvider>
+    );
+  }
 
   // Si el registro fallo no se monta el stack: no hay login que ofrecer
   // mientras el aparato no tenga identidad ante el API.

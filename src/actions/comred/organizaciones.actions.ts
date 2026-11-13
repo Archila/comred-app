@@ -1,6 +1,6 @@
 import { api } from '@/api';
 import { ENDPOINTS } from '@/constants';
-import type { OrganizacionPublica } from '@/models';
+import type { OrganizacionPublica, VersionOrganizacion } from '@/models';
 
 export const organizacionesActions = {
   /**
@@ -12,6 +12,17 @@ export const organizacionesActions = {
    */
   async getPublica(id: string): Promise<OrganizacionPublica> {
     const response = await api.get<OrganizacionPublica>(ENDPOINTS.organizaciones.publica(id));
+    return response.data;
+  },
+
+  /**
+   * `GET /comred/organizaciones/:id/version`
+   *
+   * Version minima y ultima de la app de la organizacion. Publico, limitado a
+   * 10 llamadas por minuto.
+   */
+  async getVersion(id: string): Promise<VersionOrganizacion> {
+    const response = await api.get<VersionOrganizacion>(ENDPOINTS.organizaciones.version(id));
     return response.data;
   },
 };

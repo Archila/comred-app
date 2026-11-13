@@ -53,6 +53,8 @@ export const QUERY_KEYS = {
     detail: (id: number | string) => [...QUERY_KEYS.organizaciones.all, 'detail', id] as const,
     /** Bootstrap publico (marca + categorias) de una organizacion. */
     publica: (id: string) => [...QUERY_KEYS.organizaciones.all, 'publica', id] as const,
+    /** Version minima y ultima de la app de una organizacion. */
+    version: (id: string) => [...QUERY_KEYS.organizaciones.all, 'version', id] as const,
   },
 
 } as const;

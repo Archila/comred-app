@@ -51,6 +51,8 @@ export const ENDPOINTS = {
     byId: (id: string) => `/comred/organizaciones/${id}`,
     /** Bootstrap publico: marca + categorias. No requiere sesion. */
     publica: (id: string) => `/comred/organizaciones/${id}/publica`,
+    /** Version minima y ultima de la app. Publico: se consulta antes del login. */
+    version: (id: string) => `/comred/organizaciones/${id}/version`,
   },
 
   dispositivos: {
