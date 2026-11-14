@@ -1,18 +1,24 @@
-import { Image } from 'expo-image';
-import { Lock, User } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { ChevronLeft, Lock, User, Users } from 'lucide-react-native';
 import { useState } from 'react';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
-import { Button, Input, Screen, Text } from '@/components';
+import {
+  Button,
+  Icon,
+  Input,
+  MuniLogo,
+  Screen,
+  Text,
+  useNombreMunicipalidad,
+} from '@/components';
 import { useLogin } from '@/hooks';
 import { getVersionApp } from '@/lib';
-import { useOrganizacion } from '@/store';
+import { useBrandColors } from '@/store';
 
 // Constante del binario: no cambia mientras la app esta abierta.
 const VERSION_APP = getVersionApp();
-
-// Logo empaquetado en el binario: se ve aun sin red ni bootstrap previo.
-const LOGO_MUNI = require('../../../assets/images/logo-muni.jpeg');
 
 /**
  * Pantalla de login.
@@ -20,13 +26,23 @@ const LOGO_MUNI = require('../../../assets/images/logo-muni.jpeg');
  * Es la plantilla de referencia del flujo vertical de la app:
  *   pantalla -> hook (useLogin) -> action (authActions.login) -> api (httpClient)
  *
+ * Es opcional: la app se usa sin cuenta y aqui se llega desde el menu. Por eso
+ * tiene "Volver".
+ *
  * No navega al terminar: al guardarse la sesion, el guard de `app/_layout.tsx`
- * cambia de grupo de rutas automaticamente.
+ * saca esta pantalla del stack y se vuelve solo a la app.
  */
 export default function LoginScreen() {
   const { login, isPending, errorMessage, reset } = useLogin();
-  // Marca de la municipalidad de este build; null antes del primer bootstrap.
-  const organizacion = useOrganizacion();
+  const nombreMunicipalidad = useNombreMunicipalidad();
+  const brand = useBrandColors();
+  const router = useRouter();
+
+  // Si se entro por enlace directo no hay pantalla detras a la que volver.
+  function volver() {
+    if (router.canGoBack()) router.back();
+    else router.replace('/');
+  }
 
   const [userName, setUserName] = useState('');
   const [password, setPassword] = useState('');
@@ -40,7 +56,7 @@ export default function LoginScreen() {
       errors.userName = 'El usuario debe tener al menos 3 caracteres.';
     }
     if (password.length < 6) {
-      errors.password = 'La contrasena debe tener al menos 6 caracteres.';
+      errors.password = 'La contraseña debe tener al menos 6 caracteres.';
     }
 
     setFieldErrors(errors);
@@ -55,33 +71,56 @@ export default function LoginScreen() {
   }
 
   return (
-    <Screen scrollable avoidKeyboard contentClassName="justify-center gap-6 px-6">
-      <View className="items-center gap-2">
-        {/* Fondo blanco circular: el JPEG trae fondo blanco y asi no se ve un
-            recuadro en modo oscuro. */}
-        <View className="mb-2 h-24 w-24 items-center justify-center overflow-hidden rounded-full border border-line bg-white shadow-sm dark:border-line-dark">
-          <Image
-            source={LOGO_MUNI}
-            style={{ width: 88, height: 88 }}
-            contentFit="contain"
-            accessibilityLabel={organizacion?.nombre ?? 'Logo de la municipalidad'}
-          />
+    // Fondo azul institucional en ambos temas. Va por `style` y no por clase
+    // porque `Screen` ya trae su propio fondo y `cn` no resuelve el conflicto.
+    <Screen
+      scrollable
+      avoidKeyboard
+      style={{ backgroundColor: brand.secondary }}
+      contentClassName="justify-center gap-6 px-6"
+    >
+      <StatusBar style="light" />
+
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Volver a la aplicación"
+        hitSlop={8}
+        onPress={volver}
+        disabled={isPending}
+        className="flex-row items-center gap-1 self-start py-2 active:opacity-70"
+      >
+        <Icon as={ChevronLeft} size={22} className="text-secondary-foreground" />
+        <Text variant="plain" className="text-base text-secondary-foreground">
+          Volver
+        </Text>
+      </Pressable>
+
+      <View className="flex-row items-center justify-center gap-3">
+        <MuniLogo size={64} />
+        <View>
+          <Text variant="plain" className="text-3xl font-bold leading-9 text-secondary-foreground">COMRED</Text>
+          <Text variant="plain" className="text-sm text-secondary-foreground">{nombreMunicipalidad}</Text>
         </View>
-        <Text variant="title" className="text-center">
-          {organizacion?.nombre ?? 'COMRED'}
-        </Text>
-        <Text variant="subtitle" className="text-center">
-          {organizacion
-            ? `${organizacion.municipio}, ${organizacion.departamento}`
-            : 'Ingresa con tu usuario institucional'}
-        </Text>
       </View>
 
-      <View className="gap-4">
+      <View className="items-center">
+        <Icon as={Users} size={56} className="text-secondary-foreground" />
+      </View>
+
+      <View className="gap-4 rounded-card bg-surface p-5 dark:bg-surface-dark-muted">
+        <View className="gap-1">
+          <Text variant="heading" className="text-center">
+            Iniciar sesión
+          </Text>
+          <Text variant="caption" className="text-center">
+            Acceso para personal de COMRED, brigadas y COCODES
+          </Text>
+        </View>
+
         <Input
-          label="Usuario"
+          accessibilityLabel="Usuario"
           icon={User}
-          placeholder="usuario.institucional"
+          placeholder="Usuario"
           autoCapitalize="none"
           autoCorrect={false}
           autoComplete="username"
@@ -94,9 +133,9 @@ export default function LoginScreen() {
         />
 
         <Input
-          label="Contrasena"
+          accessibilityLabel="Contraseña"
           icon={Lock}
-          placeholder="********"
+          placeholder="Contraseña"
           isPassword
           autoCapitalize="none"
           autoComplete="current-password"
@@ -115,19 +154,21 @@ export default function LoginScreen() {
           </View>
         )}
 
-        <Button label="Iniciar sesion" fullWidth loading={isPending} onPress={handleSubmit} />
+        <Button label="Ingresar" fullWidth loading={isPending} onPress={handleSubmit} />
       </View>
 
-      <Text variant="caption" className="text-center">
-        Sistema de Coordinacion Municipal para la Reduccion de Desastres
-      </Text>
-
-      {/* Para saber que version tiene cada telefono al dar soporte. */}
-      {VERSION_APP.length > 0 && (
-        <Text variant="caption" className="text-center" selectable>
-          {VERSION_APP}
+      <View className="gap-1">
+        <Text variant="plain" className="text-center text-xs text-secondary-200">
+          Coordinadora Municipal para la Reducción de Desastres
         </Text>
-      )}
+
+        {/* Para saber que version tiene cada telefono al dar soporte. */}
+        {VERSION_APP.length > 0 && (
+          <Text variant="plain" className="text-center text-xs text-secondary-200" selectable>
+            {VERSION_APP}
+          </Text>
+        )}
+      </View>
     </Screen>
   );
 }

@@ -181,7 +181,7 @@ el texto del botón pasa de blanco a oscuro solo, sin quedar ilegible.
 
 **Secuencia de arranque:**
 
-1. El store inicia con la marca por defecto de COMRED (azul `#208AEF`).
+1. El store inicia con la marca por defecto de COMRED (rojo `#D7141A` y azul institucional `#0B1F4B`).
 2. `hydrate()` lee del almacenamiento la última marca conocida → sin parpadeo de color.
 3. `useOrganizacionPublica()` llama a `GET /comred/organizaciones/:id/publica` y persiste
    el resultado. El endpoint está limitado a 5 llamadas/minuto en el API, así que se

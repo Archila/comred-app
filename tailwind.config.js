@@ -111,7 +111,8 @@ module.exports = {
 
   plugins: [
     /**
-     * Valores por defecto de la marca (COMRED central, azul #208AEF).
+     * Valores por defecto de la marca: rojo #D7141A como color de accion
+     * (primary) y azul institucional #0B1F4B para encabezado y menu (secondary).
      *
      * Se usan cuando la app aun no ha recibido la configuracion publica de la
      * organizacion, cuando el endpoint falla o cuando la organizacion no tiene
@@ -125,32 +126,32 @@ module.exports = {
     ({ addBase }) =>
       addBase({
         ':root': {
-          // primary — base #208AEF
-          '--color-primary-50': '239 247 254',
-          '--color-primary-100': '222 237 253',
-          '--color-primary-200': '188 220 250',
-          '--color-primary-300': '144 197 247',
-          '--color-primary-400': '99 173 244',
-          '--color-primary-500': '32 138 239',
-          '--color-primary-600': '27 117 203',
-          '--color-primary-700': '22 97 167',
-          '--color-primary-800': '18 76 131',
-          '--color-primary-900': '13 55 96',
-          '--color-primary-950': '7 30 53',
+          // primary — base #D7141A (rojo: acentos, botones, elemento activo)
+          '--color-primary-50': '252 239 239',
+          '--color-primary-100': '249 220 221',
+          '--color-primary-200': '243 185 186',
+          '--color-primary-300': '235 138 141',
+          '--color-primary-400': '227 91 95',
+          '--color-primary-500': '215 20 26',
+          '--color-primary-600': '183 17 22',
+          '--color-primary-700': '151 14 18',
+          '--color-primary-800': '118 11 14',
+          '--color-primary-900': '86 8 10',
+          '--color-primary-950': '47 4 6',
           '--color-primary-foreground': '255 255 255',
 
-          // secondary — base #16406F
-          '--color-secondary-50': '239 242 245',
-          '--color-secondary-100': '220 226 233',
-          '--color-secondary-200': '185 198 212',
-          '--color-secondary-300': '139 160 183',
-          '--color-secondary-400': '92 121 154',
-          '--color-secondary-500': '22 64 111',
-          '--color-secondary-600': '19 54 94',
-          '--color-secondary-700': '15 45 78',
-          '--color-secondary-800': '12 35 61',
-          '--color-secondary-900': '9 26 44',
-          '--color-secondary-950': '5 14 24',
+          // secondary — base #0B1F4B (azul institucional: encabezado y menu)
+          '--color-secondary-50': '238 239 242',
+          '--color-secondary-100': '218 221 228',
+          '--color-secondary-200': '182 188 201',
+          '--color-secondary-300': '133 143 165',
+          '--color-secondary-400': '84 98 129',
+          '--color-secondary-500': '11 31 75',
+          '--color-secondary-600': '9 26 64',
+          '--color-secondary-700': '8 22 53',
+          '--color-secondary-800': '6 17 41',
+          '--color-secondary-900': '4 12 30',
+          '--color-secondary-950': '2 7 17',
           '--color-secondary-foreground': '255 255 255',
         },
       }),

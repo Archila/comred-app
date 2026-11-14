@@ -155,7 +155,7 @@ function AvisoItem({
         className={cn(
           'gap-2 border-l-4',
           tipo.borde,
-          destacado && 'bg-primary-50 dark:bg-primary-950',
+          destacado && 'bg-secondary-50 dark:bg-secondary-700',
         )}
       >
         <View className="flex-row items-center gap-2">

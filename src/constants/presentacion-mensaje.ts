@@ -47,9 +47,12 @@ export const TIPO_MENSAJE: Record<TipoMensaje, EstiloTipoMensaje> = {
     etiqueta: 'Informativo',
     descripcion: 'Llega sin sonido.',
     icono: Info,
-    borde: 'border-l-primary-500',
-    texto: 'text-primary-600 dark:text-primary-400',
-    seleccion: 'border-primary-500 bg-primary-50 dark:bg-primary-950',
+    // Azul institucional y no el primario: el primario es rojo y se
+    // confundiria con una emergencia.
+    borde: 'border-l-secondary-400',
+    texto: 'text-secondary-500 dark:text-secondary-300',
+    seleccion:
+      'border-secondary-500 bg-secondary-50 dark:border-secondary-300 dark:bg-secondary-700',
   },
 };
 
@@ -96,8 +99,8 @@ export const ESTADO_MENSAJE: Record<
   },
   ENVIANDO: {
     etiqueta: 'Enviando',
-    fondo: 'bg-primary-100 dark:bg-primary-950',
-    texto: 'text-primary-700 dark:text-primary-400',
+    fondo: 'bg-secondary-100 dark:bg-secondary-700',
+    texto: 'text-secondary-500 dark:text-secondary-200',
   },
   ENVIADO: {
     etiqueta: 'Entregado',

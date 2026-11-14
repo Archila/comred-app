@@ -14,9 +14,9 @@ import { Platform } from 'react-native';
 export const Colors = {
   /** Marca por defecto. Debe coincidir con los valores de `addBase` en tailwind.config.js. */
   brand: {
-    500: '#208AEF',
-    600: '#1B75CB',
-    700: '#1661A7',
+    500: '#D7141A',
+    600: '#B71116',
+    700: '#970E12',
     foreground: '#FFFFFF',
   },
   light: {

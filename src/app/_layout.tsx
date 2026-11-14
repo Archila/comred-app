@@ -15,6 +15,10 @@ import { useAuthStatus, useDispositivoStatus } from '@/store';
 // sepamos si hay sesion activa.
 SplashScreen.preventAutoHideAsync();
 
+// La app siempre arranca en las pantallas publicas, y el login se apila
+// encima: "atras" desde el login vuelve a la app aunque se llegue por enlace.
+export const unstable_settings = { anchor: '(app)' };
+
 export default function RootLayout() {
   return (
     <AppProviders>
@@ -24,17 +28,24 @@ export default function RootLayout() {
 }
 
 /**
- * Navegador raiz. Es el UNICO lugar donde se decide que grupo de rutas puede
- * verse: `Stack.Protected` saca del stack el grupo cuyo guard sea falso y
- * redirige solo. Ninguna pantalla necesita hacer `router.replace` manual.
+ * Navegador raiz.
+ *
+ * MODO PUBLICO: `(app)` se monta siempre, con o sin sesion. Un vecino sin
+ * cuenta ve la informacion general y su bandeja de avisos (el API identifica
+ * al aparato, no al usuario). Lo que exige sesion se protege mas adentro, en
+ * `(app)/_layout.tsx`, y de verdad en el API.
+ *
+ * El login es opcional y se abre desde el menu. `Stack.Protected` saca
+ * `(auth)` del stack en cuanto hay sesion, y eso devuelve solo a la app:
+ * ninguna pantalla necesita hacer `router.replace` manual al iniciar sesion.
  *
  * Orden de arranque, y es deliberado:
  *   1. Dispositivo registrado (identidad del aparato, previa a la sesion).
  *   2. Sesion restaurada.
- *   3. Recien entonces se decide entre (auth) y (app).
+ *   3. Recien entonces se monta el stack, ya sabiendo si hay usuario.
  *
  * El paso 1 va primero porque un dispositivo sin registrar no recibe avisos de
- * emergencia. Dejar pasar al login lo ocultaria hasta que hiciera falta.
+ * emergencia. Dejar pasar a la app lo ocultaria hasta que hiciera falta.
  */
 function RootNavigator() {
   const dispositivoStatus = useDispositivoStatus();
@@ -63,8 +74,8 @@ function RootNavigator() {
   // mostrando el splash nativo.
   if (isArrancando) return null;
 
-  // Binario por debajo de la version minima: no se ofrece ni el login, con o
-  // sin sesion abierta. Va antes que el error de dispositivo porque un APK
+  // Binario por debajo de la version minima: no se ofrece nada, con o sin
+  // sesion abierta. Va antes que el error de dispositivo porque un APK
   // obsoleto puede ser justo la causa de que el registro falle.
   if (versionApp.estado === 'OBLIGATORIA') {
     return (
@@ -75,7 +86,7 @@ function RootNavigator() {
     );
   }
 
-  // Si el registro fallo no se monta el stack: no hay login que ofrecer
+  // Si el registro fallo no se monta el stack: no hay nada que ofrecer
   // mientras el aparato no tenga identidad ante el API.
   if (dispositivoStatus === 'error') {
     return (
@@ -91,12 +102,10 @@ function RootNavigator() {
       <StatusBar style="auto" />
 
       <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(app)" />
+
         <Stack.Protected guard={!isAuthenticated}>
           <Stack.Screen name="(auth)" />
-        </Stack.Protected>
-
-        <Stack.Protected guard={isAuthenticated}>
-          <Stack.Screen name="(app)" />
         </Stack.Protected>
       </Stack>
     </ThemeProvider>

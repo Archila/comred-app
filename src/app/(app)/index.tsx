@@ -6,7 +6,10 @@ import { BrandLogo, Button, Card, Icon, Screen, Text } from '@/components';
 import { useCapacidadesEnvio } from '@/hooks';
 import { useAuthUser, useOrganizacion } from '@/store';
 
-/** Pantalla de inicio. */
+/**
+ * Pantalla de inicio. Es publica: sin sesion saluda con el nombre de la
+ * municipalidad y omite lo que es propio de un usuario.
+ */
 export default function HomeScreen() {
   const user = useAuthUser();
   const organizacion = useOrganizacion();
@@ -17,7 +20,9 @@ export default function HomeScreen() {
         <BrandLogo size={48} />
         <View className="flex-1">
           <Text variant="subtitle">Bienvenido</Text>
-          <Text variant="heading">{user?.nombreCompleto ?? 'Usuario'}</Text>
+          <Text variant="heading">
+            {user?.nombreCompleto ?? organizacion?.nombre ?? 'COMRED'}
+          </Text>
         </View>
       </View>
 
@@ -43,10 +48,12 @@ export default function HomeScreen() {
         </Card>
       )}
 
-      <Card className="gap-1">
-        <Text variant="label">Rol</Text>
-        <Text variant="body">{user?.rol?.nombre ?? 'Sin rol'}</Text>
-      </Card>
+      {user && (
+        <Card className="gap-1">
+          <Text variant="label">Rol</Text>
+          <Text variant="body">{user.rol?.nombre ?? 'Sin rol'}</Text>
+        </Card>
+      )}
     </Screen>
   );
 }

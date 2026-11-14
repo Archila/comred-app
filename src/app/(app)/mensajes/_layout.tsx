@@ -1,7 +1,6 @@
 import { Stack } from 'expo-router';
-import { useColorScheme } from 'react-native';
 
-import { Colors } from '@/constants';
+import { useBrandColors } from '@/store';
 
 /**
  * El historial queda siempre debajo: si se entra directo a "Nuevo aviso"
@@ -13,19 +12,20 @@ export const unstable_settings = { anchor: 'index' };
 /**
  * Pestana de avisos enviados: historial -> detalle, e historial -> nuevo aviso.
  *
- * Es un Stack dentro de la pestana para que "atras" vuelva al historial. La
- * pestana oculta su propia cabecera (ver `(app)/_layout.tsx`) y la pinta este
- * Stack, con los mismos colores, para no mostrar dos.
+ * Es un Stack dentro de la pestana para que "atras" vuelva al historial. Su
+ * cabecera hace de barra de seccion: va debajo del encabezado institucional
+ * (ver `(app)/_layout.tsx`) y con su mismo azul. React Navigation no acepta
+ * `className` aqui, por eso el color se lee del store de marca.
  */
 export default function MensajesLayout() {
-  const scheme = useColorScheme();
-  const palette = scheme === 'dark' ? Colors.dark : Colors.light;
+  const brand = useBrandColors();
 
   return (
     <Stack
       screenOptions={{
-        headerStyle: { backgroundColor: palette.background },
-        headerTintColor: palette.text,
+        headerStyle: { backgroundColor: brand.secondaryDark },
+        headerTintColor: brand.secondaryForeground,
+        headerTitleAlign: 'center',
         headerShadowVisible: false,
       }}
     >

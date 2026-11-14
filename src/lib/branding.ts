@@ -18,10 +18,14 @@ import {
  *     exige un valor literal (tab bar, ActivityIndicator, StatusBar).
  */
 
-/** Marca por defecto: COMRED central. Debe coincidir con `addBase` de tailwind.config.js. */
+/**
+ * Marca por defecto: rojo de accion (primario) y azul institucional del
+ * encabezado y el menu (secundario). Debe coincidir con `addBase` de
+ * tailwind.config.js.
+ */
 export const DEFAULT_BRAND = {
-  primario: '#208AEF',
-  secundario: '#16406F',
+  primario: '#D7141A',
+  secundario: '#0B1F4B',
 } as const;
 
 export interface BrandColors {

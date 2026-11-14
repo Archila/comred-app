@@ -7,7 +7,8 @@ import { useAuthStore } from '@/store';
 
 /**
  * Cierra sesion: avisa al API, limpia el store, el almacenamiento seguro y la
- * cache. El guard de `app/_layout.tsx` se encarga de mandar al login.
+ * cache. No navega: la app sigue abierta en modo publico, y los guards de
+ * `app/(app)/_layout.tsx` retiran las pantallas que exigen usuario.
  *
  * El aviso al API es lo que desvincula el aparato del usuario; sin el, el
  * telefono seguiria recibiendo los mensajes dirigidos a alguien que ya se fue.

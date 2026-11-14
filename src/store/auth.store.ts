@@ -63,7 +63,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       await secureStorage.setObject(STORAGE_KEYS.user, session.user);
       set({ status: 'authenticated', user: session.user, token: session.token });
     } catch {
-      // Token vencido o revocado: se limpia todo y se manda al login.
+      // Token vencido o revocado: se limpia todo y la app queda en modo publico.
       setAuthToken(null);
       await secureStorage.removeItem(STORAGE_KEYS.token);
       await secureStorage.removeItem(STORAGE_KEYS.user);

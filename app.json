@@ -2,7 +2,7 @@
   "expo": {
     "name": "COMRED",
     "slug": "comred-app",
-    "version": "1.0.0",
+    "version": "1.1.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "comredapp",
@@ -31,7 +31,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
+          "backgroundColor": "#0B1F4B",
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }

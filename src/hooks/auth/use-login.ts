@@ -11,7 +11,8 @@ import type { LoginPayload, LoginResponse } from '@/models';
  * Login del usuario.
  *
  * No navega: al guardar la sesion cambia `status` en el store y el guard de
- * `app/_layout.tsx` redirige solo. Asi la navegacion tiene una sola fuente.
+ * `app/_layout.tsx` saca el login del stack, lo que devuelve a la app. Asi la
+ * navegacion tiene una sola fuente.
  */
 export function useLogin() {
   const setSession = useAuthStore((state) => state.setSession);
