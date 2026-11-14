@@ -5,6 +5,7 @@ import {
   ClipboardList,
   Clock,
   FileText,
+  Hourglass,
   Flag,
   Landmark,
   MapPin,
@@ -181,6 +182,13 @@ function Contenido({ publicacion }: { publicacion: Publicacion }) {
           valor={formatDateTime(publicacion.fechaPublicacion)}
         />
         {actualizada && <Dato icono={CalendarClock} etiqueta="Última actualización" valor={actualizada} />}
+        {publicacion.fechaExpiracion && (
+          <Dato
+            icono={Hourglass}
+            etiqueta="Disponible hasta"
+            valor={formatDateTime(publicacion.fechaExpiracion)}
+          />
+        )}
         {responsable && <Dato icono={Landmark} etiqueta="Responsable" valor={responsable} />}
         {comunidad && (
           <Dato

@@ -138,6 +138,11 @@ export interface Publicacion {
   fechaPublicacion: string;
   /** ISO 8601. Ultima edicion desde el panel; los API anteriores no la envian. */
   fechaActualizacion?: string | null;
+  /**
+   * ISO 8601. Hasta cuando se vera; `null` si no vence. Pasada la fecha el
+   * API deja de enviarla, la app no tiene que filtrar nada.
+   */
+  fechaExpiracion?: string | null;
   /** Visibilidad GRUPO: contenido interno de una brigada o COCODE. */
   interna: boolean;
   categoria: { id: string; nombre: string } | null;
