@@ -93,6 +93,21 @@ export const ENDPOINTS = {
     capacidades: '/comred/mensajes/capacidades',
   },
 
+  /**
+   * Lo que la app lee de las secciones (reportes, boletines...). Solo GET y,
+   * como la bandeja, se autentica con las cabeceras del dispositivo: un 401
+   * aqui es del aparato, no de la sesion.
+   */
+  contenido: {
+    base: '/comred/contenido/publico',
+    /** Tarjetas de la pantalla de categorias, en su orden. */
+    categorias: (seccion: string) => `/comred/contenido/publico/secciones/${seccion}/categorias`,
+    /** Feed paginado; filtra por seccion, tarjeta o incidente. */
+    publicaciones: '/comred/contenido/publico/publicaciones',
+    publicacionById: (id: string) => `/comred/contenido/publico/publicaciones/${id}`,
+    incidentes: '/comred/contenido/publico/incidentes',
+  },
+
   catalogo: {
     arbol: '/comred/catalogo/arbol',
     categorias: '/comred/catalogo/categorias',

@@ -121,9 +121,16 @@ export function setVersionObsoletaHandler(handler: UnauthorizedHandler | null): 
   onVersionObsoleta = handler;
 }
 
+/**
+ * Rutas que se autentican con las cabeceras del aparato y no con el JWT. Un
+ * 401 en ellas es del dispositivo: cerrar sesion no lo arreglaria.
+ */
+const RUTAS_DE_DISPOSITIVO = [ENDPOINTS.dispositivos.base, ENDPOINTS.contenido.base];
+
 function esRutaDeDispositivo(error: unknown): boolean {
   const url = isAxiosError(error) ? error.config?.url : undefined;
-  return url?.startsWith(`${ENDPOINTS.dispositivos.base}/`) ?? false;
+  if (!url) return false;
+  return RUTAS_DE_DISPOSITIVO.some((base) => url.startsWith(`${base}/`));
 }
 
 /* -------------------------------------------------------------------------- */

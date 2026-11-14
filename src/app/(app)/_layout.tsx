@@ -48,6 +48,14 @@ export default function AppLayout() {
         <Tabs.Screen name="index" />
         <Tabs.Screen name="avisos" options={{ title: 'Avisos' }} />
         {/*
+          Secciones con tarjetas y visor. Sin `title`: la barra de seccion la
+          pinta su Stack (`SeccionStack`), que cambia de titulo al entrar en
+          una tarjeta. Al ser pestanas no se desmontan, y el visor conserva su
+          posicion al ir y volver desde el menu.
+        */}
+        <Tabs.Screen name="reportes" />
+        <Tabs.Screen name="boletines" />
+        {/*
           Envio e historial de avisos. `Tabs.Protected` saca la ruta entera, no
           solo la opcion del menu: un vecino no puede llegar a ella ni con un
           enlace. Es comodidad, no seguridad: el API valida cada envio y cada

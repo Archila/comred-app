@@ -9,12 +9,12 @@ import {
   X,
   type LucideIcon,
 } from 'lucide-react-native';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { BackHandler, Pressable, ScrollView, useWindowDimensions, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, SlideInLeft, SlideOutLeft } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { SECCIONES_MENU } from '@/constants';
+import { SECCIONES_MENU, estaEnSeccion, rutaDeSeccion } from '@/constants';
 import { useLogout } from '@/hooks';
 import { cn } from '@/lib';
 
@@ -70,6 +70,16 @@ export function MenuLateral({
   const pathname = usePathname();
   const logout = useLogout();
   const nombreMunicipalidad = useNombreMunicipalidad();
+
+  // Ultima pantalla visitada de cada seccion. Plan Maestro 3.1: "conservar la
+  // posicion cuando el usuario regrese desde el menu". Las pestanas no se
+  // desmontan, asi que volver a la misma ruta encuentra el visor tal cual;
+  // ir a la raiz, en cambio, cerraria el visor.
+  const ultimaRuta = useRef<Record<string, string>>({});
+  useEffect(() => {
+    const seccion = SECCIONES_MENU.find((candidata) => estaEnSeccion(pathname, candidata));
+    if (seccion) ultimaRuta.current[seccion.slug] = pathname;
+  }, [pathname]);
 
   // El boton "atras" de Android cierra el menu en vez de salir de la pantalla.
   useEffect(() => {
@@ -151,15 +161,26 @@ export function MenuLateral({
               onPress={() => ir('/')}
             />
 
-            {SECCIONES_MENU.map((seccion) => (
-              <Opcion
-                key={seccion.slug}
-                etiqueta={seccion.etiqueta}
-                icono={seccion.icono}
-                activa={pathname === `/seccion/${seccion.slug}`}
-                onPress={() => ir(`/seccion/${seccion.slug}` as Href)}
-              />
-            ))}
+            {SECCIONES_MENU.map((seccion) => {
+              const activa = estaEnSeccion(pathname, seccion);
+              return (
+                <Opcion
+                  key={seccion.slug}
+                  etiqueta={seccion.etiqueta}
+                  icono={seccion.icono}
+                  activa={activa}
+                  // Desde dentro de la seccion, su opcion lleva a la raiz
+                  // (las tarjetas). Desde fuera, a donde se quedo.
+                  onPress={() =>
+                    ir(
+                      (activa
+                        ? rutaDeSeccion(seccion)
+                        : (ultimaRuta.current[seccion.slug] ?? rutaDeSeccion(seccion))) as Href,
+                    )
+                  }
+                />
+              );
+            })}
 
             {mostrarEnvioAvisos && (
               <Opcion

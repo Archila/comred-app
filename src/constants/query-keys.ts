@@ -1,4 +1,11 @@
-import type { BandejaParams, EnviosParams, HistorialParams, PaginationParams } from '@/models';
+import type {
+  BandejaParams,
+  EnviosParams,
+  HistorialParams,
+  IncidentesParams,
+  PaginationParams,
+  SeccionContenido,
+} from '@/models';
 
 /**
  * Claves de cache de TanStack Query centralizadas.
@@ -44,6 +51,21 @@ export const QUERY_KEYS = {
     detalle: (id: string) => [...QUERY_KEYS.mensajes.all, 'detalle', id] as const,
     envios: (id: string, params?: Omit<EnviosParams, 'page'>) =>
       [...QUERY_KEYS.mensajes.all, 'envios', id, params ?? {}] as const,
+  },
+
+  /**
+   * Contenido publico. Depende de la sesion abierta en el aparato (lo interno
+   * de una brigada o COCODE), pero login y logout ya vacian la cache entera.
+   */
+  contenido: {
+    all: ['contenido'] as const,
+    categorias: (seccion: SeccionContenido) =>
+      [...QUERY_KEYS.contenido.all, 'categorias', seccion] as const,
+    /** El visor de una seccion, arrancando en una tarjeta. */
+    visor: (seccion: SeccionContenido, categoriaInicialId: string, continua: boolean) =>
+      [...QUERY_KEYS.contenido.all, 'visor', seccion, categoriaInicialId, continua] as const,
+    incidentes: (params?: IncidentesParams) =>
+      [...QUERY_KEYS.contenido.all, 'incidentes', params ?? {}] as const,
   },
 
   organizaciones: {
