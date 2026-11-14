@@ -1,5 +1,6 @@
 import type {
   BandejaParams,
+  EntidadesParams,
   EnviosParams,
   HistorialParams,
   IncidentesParams,
@@ -66,6 +67,10 @@ export const QUERY_KEYS = {
       [...QUERY_KEYS.contenido.all, 'visor', seccion, categoriaInicialId, continua] as const,
     incidentes: (params?: IncidentesParams) =>
       [...QUERY_KEYS.contenido.all, 'incidentes', params ?? {}] as const,
+    jornadas: (params?: EntidadesParams) =>
+      [...QUERY_KEYS.contenido.all, 'jornadas', params ?? {}] as const,
+    proyectos: (params?: EntidadesParams) =>
+      [...QUERY_KEYS.contenido.all, 'proyectos', params ?? {}] as const,
   },
 
   organizaciones: {

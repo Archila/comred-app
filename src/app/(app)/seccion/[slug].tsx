@@ -6,7 +6,7 @@ import { buscarSeccion } from '@/constants';
 
 /**
  * Pantalla provisional de las secciones del menu que aun no estan construidas
- * (reportes, boletines, jornadas...). El titulo lo pone el encabezado.
+ * (mapa, COCODES). El titulo lo pone el encabezado.
  */
 export default function SeccionScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();

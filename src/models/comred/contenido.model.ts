@@ -35,6 +35,11 @@ export type EstadoIncidente =
  */
 export type VerificacionIncidente = 'REPORTE' | 'VERIFICADO' | 'ALERTA_OFICIAL';
 
+/** Plan Maestro 7: proxima, en desarrollo, finalizada o cancelada. */
+export type EstadoJornada = 'PROXIMA' | 'EN_DESARROLLO' | 'FINALIZADA' | 'CANCELADA';
+
+export type EstadoProyecto = 'PLANIFICADO' | 'EN_EJECUCION' | 'SUSPENDIDO' | 'FINALIZADO';
+
 /** Una tarjeta de la pantalla de categorias de una seccion. */
 export interface CategoriaContenido {
   id: string;
@@ -77,6 +82,49 @@ export interface IncidentePublico {
   afectaciones: string | null;
 }
 
+/** Una actividad con fecha y lugar. Sus publicaciones la anuncian y la cuentan. */
+export interface JornadaPublica {
+  id: string;
+  categoriaContenidoId: string;
+  nombre: string;
+  descripcion: string | null;
+  /** Institucion organizadora. */
+  institucion: string | null;
+  /** ISO 8601. */
+  fechaInicio: string;
+  fechaFin: string | null;
+  /** Texto para la gente ("8:00 a 15:00"); las fechas son para ordenar. */
+  horario: string | null;
+  lugar: string | null;
+  /** Comunidad beneficiada. */
+  comunidad: string | null;
+  servicios: string | null;
+  requisitos: string | null;
+  contacto: string | null;
+  latitud: number | null;
+  longitud: number | null;
+  estado: EstadoJornada;
+}
+
+/** Una obra municipal. Sus publicaciones son el seguimiento del avance. */
+export interface ProyectoPublico {
+  id: string;
+  categoriaContenidoId: string;
+  nombre: string;
+  descripcion: string | null;
+  comunidad: string | null;
+  /** Dependencia responsable. */
+  dependencia: string | null;
+  /** 'AAAA-MM-DD', sin hora: no pasa por la zona horaria. */
+  fechaInicio: string | null;
+  fechaFinPrevista: string | null;
+  estado: EstadoProyecto;
+  /** Porcentaje 0-100. `null` = sin dato comprobado, que no es lo mismo que 0. */
+  avance: number | null;
+  latitud: number | null;
+  longitud: number | null;
+}
+
 /** Una publicacion del visor. Es la misma forma para todas las secciones. */
 export interface Publicacion {
   id: string;
@@ -93,7 +141,10 @@ export interface Publicacion {
   /** Visibilidad GRUPO: contenido interno de una brigada o COCODE. */
   interna: boolean;
   categoria: { id: string; nombre: string } | null;
+  /** Como mucho una de las tres: lo propio de su seccion. */
   incidente: IncidentePublico | null;
+  jornada: JornadaPublica | null;
+  proyecto: ProyectoPublico | null;
   media: MediaPublicacion[];
 }
 
@@ -105,11 +156,19 @@ export interface FeedPublicacionesParams {
   seccion?: SeccionContenido;
   categoriaContenidoId?: string;
   incidenteId?: string;
+  jornadaId?: string;
+  proyectoId?: string;
 }
 
-/** Query params de `GET /comred/contenido/publico/incidentes`. */
-export interface IncidentesParams {
+/**
+ * Query params de los listados de entidades: `incidentes`, `jornadas` y
+ * `proyectos` de `/comred/contenido/publico`.
+ */
+export interface EntidadesParams {
   page?: number;
   limit?: number;
   categoriaContenidoId?: string;
 }
+
+/** Los incidentes no filtran por nada mas. */
+export type IncidentesParams = EntidadesParams;

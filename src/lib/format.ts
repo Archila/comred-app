@@ -41,6 +41,16 @@ export function formatDateTime(value?: string | Date | null): string {
   }).format(date);
 }
 
+/**
+ * Fecha sin hora que el API envia como texto 'AAAA-MM-DD' (inicio de un
+ * proyecto). No pasa por `Date`: interpretarla como medianoche UTC la
+ * mostraria el dia anterior en hora de Guatemala.
+ */
+export function formatDateOnly(value?: string | null): string {
+  const partes = /^(\d{4})-(\d{2})-(\d{2})/.exec(value ?? '');
+  return partes ? `${partes[3]}/${partes[2]}/${partes[1]}` : '';
+}
+
 /** Cantidad con separador de miles de Guatemala. Ej: 1243 -> "1,243". */
 export function formatNumber(value: number): string {
   return new Intl.NumberFormat(LOCALE).format(value);

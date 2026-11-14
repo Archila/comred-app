@@ -1,16 +1,22 @@
 import { Lock } from 'lucide-react-native';
 import { View } from 'react-native';
 
-import { ESTADO_INCIDENTE, VERIFICACION_INCIDENTE } from '@/constants';
+import {
+  ESTADO_INCIDENTE,
+  ESTADO_JORNADA,
+  ESTADO_PROYECTO,
+  VERIFICACION_INCIDENTE,
+} from '@/constants';
 import type { Publicacion } from '@/models';
 
 import { Etiqueta } from './etiqueta';
 
 /**
- * Insignias de una publicacion: categoria, y para un reporte su nivel de
- * verificacion y su estado. Lo interno de una brigada o COCODE se marca
- * siempre (Plan Maestro, 8.3: "distincion clara entre publicaciones publicas
- * e internas").
+ * Insignias de una publicacion: categoria, y el estado de lo que cuenta: de
+ * un reporte, ademas, su nivel de verificacion; de una jornada, si es proxima,
+ * esta en desarrollo, finalizo o se cancelo (Plan Maestro, 7); de un proyecto,
+ * su estado (10). Lo interno de una brigada o COCODE se marca siempre (8.3:
+ * "distincion clara entre publicaciones publicas e internas").
  */
 export function InsigniasPublicacion({
   publicacion,
@@ -22,7 +28,13 @@ export function InsigniasPublicacion({
 }) {
   const incidente = publicacion.incidente;
   const verificacion = incidente ? VERIFICACION_INCIDENTE[incidente.verificacion] : null;
-  const estado = incidente ? ESTADO_INCIDENTE[incidente.estado] : null;
+  const estado = incidente
+    ? ESTADO_INCIDENTE[incidente.estado]
+    : publicacion.jornada
+      ? ESTADO_JORNADA[publicacion.jornada.estado]
+      : publicacion.proyecto
+        ? ESTADO_PROYECTO[publicacion.proyecto.estado]
+        : null;
   const categoria = publicacion.categoria?.nombre ?? tarjeta;
 
   return (

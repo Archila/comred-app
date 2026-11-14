@@ -5,8 +5,11 @@ import { contenidoActions } from '@/actions';
 import { QUERY_KEYS } from '@/constants';
 import type {
   CategoriaContenido,
+  EntidadesParams,
   IncidentePublico,
   IncidentesParams,
+  JornadaPublica,
+  ProyectoPublico,
   Publicacion,
   SeccionContenido,
 } from '@/models';
@@ -39,6 +42,27 @@ export function useIncidentesPublicos(params: IncidentesParams = {}, enabled = t
   return useQuery({
     queryKey: QUERY_KEYS.contenido.incidentes(params),
     queryFn: () => contenidoActions.incidentes(params),
+    enabled,
+  });
+}
+
+/**
+ * Jornadas de la organizacion. La pantalla de Jornadas las usa para marcar
+ * las tarjetas con actividades proximas o en desarrollo (Plan Maestro, 7).
+ */
+export function useJornadasPublicas(params: EntidadesParams = {}, enabled = true) {
+  return useQuery({
+    queryKey: QUERY_KEYS.contenido.jornadas(params),
+    queryFn: () => contenidoActions.jornadas(params),
+    enabled,
+  });
+}
+
+/** Proyectos de la organizacion, para marcar las tarjetas con obras en marcha. */
+export function useProyectosPublicos(params: EntidadesParams = {}, enabled = true) {
+  return useQuery({
+    queryKey: QUERY_KEYS.contenido.proyectos(params),
+    queryFn: () => contenidoActions.proyectos(params),
     enabled,
   });
 }
@@ -173,6 +197,37 @@ export function resumirIncidentes(
     const actual = (resumen[incidente.categoriaContenidoId] ??= { activos: 0, alertaOficial: false });
     actual.activos += 1;
     if (incidente.verificacion === 'ALERTA_OFICIAL') actual.alertaOficial = true;
+  }
+  return resumen;
+}
+
+/** Resume las jornadas vigentes de cada tarjeta, para marcarlas. */
+export interface ResumenJornadas {
+  proximas: number;
+  enDesarrollo: number;
+}
+
+export function resumirJornadas(
+  jornadas: JornadaPublica[] | undefined,
+): Record<string, ResumenJornadas> {
+  const resumen: Record<string, ResumenJornadas> = {};
+
+  for (const jornada of jornadas ?? []) {
+    if (jornada.estado !== 'PROXIMA' && jornada.estado !== 'EN_DESARROLLO') continue;
+    const actual = (resumen[jornada.categoriaContenidoId] ??= { proximas: 0, enDesarrollo: 0 });
+    if (jornada.estado === 'PROXIMA') actual.proximas += 1;
+    else actual.enDesarrollo += 1;
+  }
+  return resumen;
+}
+
+/** Cuantos proyectos en ejecucion tiene cada tarjeta. */
+export function resumirProyectos(proyectos: ProyectoPublico[] | undefined): Record<string, number> {
+  const resumen: Record<string, number> = {};
+
+  for (const proyecto of proyectos ?? []) {
+    if (proyecto.estado !== 'EN_EJECUCION') continue;
+    resumen[proyecto.categoriaContenidoId] = (resumen[proyecto.categoriaContenidoId] ?? 0) + 1;
   }
   return resumen;
 }

@@ -2,10 +2,13 @@ import { api } from '@/api';
 import { ENDPOINTS } from '@/constants';
 import type {
   CategoriaContenido,
+  EntidadesParams,
   FeedPublicacionesParams,
   IncidentePublico,
   IncidentesParams,
+  JornadaPublica,
   PaginatedResult,
+  ProyectoPublico,
   Publicacion,
   SeccionContenido,
 } from '@/models';
@@ -54,6 +57,18 @@ export const contenidoActions = {
   /** `GET /comred/contenido/publico/incidentes` */
   async incidentes(params: IncidentesParams = {}): Promise<PaginatedResult<IncidentePublico>> {
     const response = await api.get<IncidentePublico[]>(ENDPOINTS.contenido.incidentes, { params });
+    return paginado(response.data ?? [], response.metadata, params);
+  },
+
+  /** `GET /comred/contenido/publico/jornadas`. De la mas reciente a la mas antigua. */
+  async jornadas(params: EntidadesParams = {}): Promise<PaginatedResult<JornadaPublica>> {
+    const response = await api.get<JornadaPublica[]>(ENDPOINTS.contenido.jornadas, { params });
+    return paginado(response.data ?? [], response.metadata, params);
+  },
+
+  /** `GET /comred/contenido/publico/proyectos` */
+  async proyectos(params: EntidadesParams = {}): Promise<PaginatedResult<ProyectoPublico>> {
+    const response = await api.get<ProyectoPublico[]>(ENDPOINTS.contenido.proyectos, { params });
     return paginado(response.data ?? [], response.metadata, params);
   },
 };

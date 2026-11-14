@@ -27,10 +27,11 @@ import { ErrorState } from '../feedback/error-state';
 import { LoadingScreen } from '../feedback/loading-screen';
 import { Button } from '../ui/button';
 import { Text } from '../ui/text';
+import { entidadDe } from './acciones';
 import { DetallePublicacion } from './detalle-publicacion';
 import { PublicacionSlide } from './publicacion-slide';
 
-/** Cuanto se ve el aviso discreto al pasar a otra tarjeta o incidente. */
+/** Cuanto se ve el aviso discreto al pasar a otra tarjeta, incidente, jornada o proyecto. */
 const DURACION_AVISO = 2200;
 
 const VISIBILIDAD = { itemVisiblePercentThreshold: 60 };
@@ -208,19 +209,23 @@ export function PantallaVisor({ seccion }: { seccion: SeccionConVisor }) {
   );
 }
 
-/** Lo que identifica "donde estoy": la tarjeta y, en reportes, el incidente. */
+/**
+ * Lo que identifica "donde estoy": la tarjeta y, si la publicacion cuenta
+ * uno, el incidente, la jornada o el proyecto.
+ */
 function contextoDe(item: PublicacionVisor | undefined) {
   if (!item) return null;
-  const incidente = item.publicacion.incidente;
+  const entidad = entidadDe(item.publicacion);
   return {
-    clave: `${item.tarjeta.id}|${incidente?.id ?? ''}`,
-    texto: incidente ? `${item.tarjeta.nombre} · ${incidente.nombre}` : item.tarjeta.nombre,
+    clave: `${item.tarjeta.id}|${entidad?.id ?? ''}`,
+    texto: entidad ? `${item.tarjeta.nombre} · ${entidad.nombre}` : item.tarjeta.nombre,
   };
 }
 
 /**
- * Aviso discreto cuando la publicacion visible es de otra tarjeta u otro
- * incidente que la anterior (Plan Maestro, 3.4). No sale al abrir el visor:
+ * Aviso discreto cuando la publicacion visible es de otra tarjeta, u otro
+ * incidente, jornada o proyecto, que la anterior (Plan Maestro, 3.4: "al
+ * llegar al final del proyecto, continuar hacia otro"). No sale al abrir el visor:
  * ahi el titulo ya dice donde se esta.
  *
  * Se dispara desde el callback de visibilidad y no desde un efecto: es la

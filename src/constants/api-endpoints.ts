@@ -106,6 +106,8 @@ export const ENDPOINTS = {
     publicaciones: '/comred/contenido/publico/publicaciones',
     publicacionById: (id: string) => `/comred/contenido/publico/publicaciones/${id}`,
     incidentes: '/comred/contenido/publico/incidentes',
+    jornadas: '/comred/contenido/publico/jornadas',
+    proyectos: '/comred/contenido/publico/proyectos',
   },
 
   catalogo: {

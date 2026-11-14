@@ -30,10 +30,10 @@ export interface SeccionMenu {
 export const SECCIONES_MENU: SeccionMenu[] = [
   { slug: 'reportes', etiqueta: 'Reportes de desastres', icono: TriangleAlert, ruta: '/reportes' },
   { slug: 'boletines', etiqueta: 'Boletines', icono: FileText, ruta: '/boletines' },
-  { slug: 'jornadas', etiqueta: 'Jornadas', icono: CalendarDays },
-  { slug: 'brigadas', etiqueta: 'Brigadas', icono: Users },
+  { slug: 'jornadas', etiqueta: 'Jornadas', icono: CalendarDays, ruta: '/jornadas' },
+  { slug: 'brigadas', etiqueta: 'Brigadas', icono: Users, ruta: '/brigadas' },
   { slug: 'mapa', etiqueta: 'Mapa general del municipio', icono: MapPin },
-  { slug: 'proyectos', etiqueta: 'Proyectos actuales', icono: HardHat },
+  { slug: 'proyectos', etiqueta: 'Proyectos actuales', icono: HardHat, ruta: '/proyectos' },
   { slug: 'cocodes', etiqueta: 'COCODES', icono: UsersRound },
 ];
 

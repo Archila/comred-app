@@ -1,33 +1,63 @@
 import { Linking, Platform, Share } from 'react-native';
 
-import { resolveAssetUrl } from '@/lib';
-import type { IncidentePublico, Publicacion } from '@/models';
+import { formatDate, resolveAssetUrl } from '@/lib';
+import type { IncidentePublico, JornadaPublica, ProyectoPublico, Publicacion } from '@/models';
 
 /**
- * Acciones de una publicacion: compartir, ver la ubicacion y abrir un
- * documento. Todas delegan en el sistema operativo.
+ * Lo que una publicacion toma de su entidad (incidente, jornada o proyecto) y
+ * sus acciones: compartir, ver la ubicacion y abrir un documento. Las
+ * acciones delegan en el sistema operativo.
  */
 
-/** Ubicacion de la publicacion, si su incidente la tiene. */
+/**
+ * El incidente, la jornada o el proyecto que la publicacion va contando. Como
+ * mucho hay uno; las de Boletines o Brigadas no tienen ninguno.
+ */
+export function entidadDe(
+  publicacion: Publicacion,
+): IncidentePublico | JornadaPublica | ProyectoPublico | null {
+  return publicacion.incidente ?? publicacion.jornada ?? publicacion.proyecto ?? null;
+}
+
+/** Comunidad de la publicacion o, si no la indica, la de su entidad. */
+export function comunidadDe(publicacion: Publicacion): string | null {
+  return publicacion.comunidad ?? entidadDe(publicacion)?.comunidad ?? null;
+}
+
+/** Dia de la jornada, o "05/11/2026 al 07/11/2026" si dura varios. */
+export function diasDe(jornada: JornadaPublica): string {
+  const inicio = formatDate(jornada.fechaInicio);
+  const fin = formatDate(jornada.fechaFin);
+  return fin && fin !== inicio ? `${inicio} al ${fin}` : inicio;
+}
+
+/** "05/11/2026 · 8:00 a 15:00": cuando es la jornada, para la gente. */
+export function cuandoEs(jornada: JornadaPublica): string {
+  return [diasDe(jornada), jornada.horario].filter(Boolean).join(' · ');
+}
+
+/** Ubicacion de la publicacion, si su entidad la tiene. */
 export function ubicacionDe(
   publicacion: Publicacion,
 ): { latitud: number; longitud: number; etiqueta: string } | null {
-  const incidente: IncidentePublico | null = publicacion.incidente;
-  if (incidente?.latitud == null || incidente.longitud == null) return null;
+  const entidad = entidadDe(publicacion);
+  if (entidad?.latitud == null || entidad.longitud == null) return null;
 
   return {
-    latitud: incidente.latitud,
-    longitud: incidente.longitud,
-    etiqueta: incidente.nombre,
+    latitud: entidad.latitud,
+    longitud: entidad.longitud,
+    etiqueta: publicacion.jornada?.lugar ?? entidad.nombre,
   };
 }
 
 export async function compartirPublicacion(publicacion: Publicacion): Promise<void> {
-  const lugar = publicacion.comunidad ?? publicacion.incidente?.comunidad;
+  const jornada = publicacion.jornada;
+  const lugar = jornada?.lugar ?? comunidadDe(publicacion);
   const ubicacion = ubicacionDe(publicacion);
 
   const partes = [
     publicacion.titulo,
+    jornada ? `Fecha: ${cuandoEs(jornada)}` : null,
     lugar ? `Lugar: ${lugar}` : null,
     publicacion.descripcion,
     ubicacion

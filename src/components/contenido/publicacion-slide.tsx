@@ -1,7 +1,9 @@
 import {
   CalendarClock,
+  CalendarDays,
   FileText,
   Landmark,
+  Lock,
   MapPin,
   Share2,
   Siren,
@@ -15,7 +17,16 @@ import type { Publicacion } from '@/models';
 
 import { Icon } from '../ui/icon';
 import { Text } from '../ui/text';
-import { abrirDocumento, abrirUbicacion, compartirPublicacion, ubicacionDe } from './acciones';
+import {
+  abrirDocumento,
+  abrirUbicacion,
+  compartirPublicacion,
+  comunidadDe,
+  cuandoEs,
+  entidadDe,
+  ubicacionDe,
+} from './acciones';
+import { BarraAvance } from './barra-avance';
 import { GaleriaMedia } from './galeria-media';
 import { esAlertaActiva, InsigniasPublicacion } from './insignias-publicacion';
 
@@ -36,6 +47,9 @@ const HUECO_BOTON_MENU = 76;
  * galeria arriba, protagonista, y debajo el resumen. Lo demas —descripcion
  * completa, recomendaciones, documentos— se abre con "Ver mas", para que
  * ningun texto largo empuje la foto fuera de la pantalla.
+ *
+ * El resumen cambia con lo que la publicacion cuenta: de un incidente, cuando
+ * se reporto; de una jornada, cuando y donde es; de un proyecto, su avance.
  *
  * La descripcion se recorta al espacio que quede: en un telefono bajo se ven
  * menos lineas, pero las acciones siempre quedan a la vista.
@@ -65,10 +79,18 @@ export const PublicacionSlide = memo(function PublicacionSlide({
   const documentos = publicacion.media.filter((archivo) => archivo.tipo === 'DOCUMENTO');
   const ubicacion = ubicacionDe(publicacion);
   const alerta = esAlertaActiva(publicacion);
-  const incidente = publicacion.incidente;
-  const lugar = [publicacion.comunidad ?? incidente?.comunidad, publicacion.dependencia]
+  const { incidente, jornada, proyecto } = publicacion;
+  const entidad = entidadDe(publicacion);
+  const comunidad = comunidadDe(publicacion);
+  // De una jornada importa el sitio exacto; del resto, comunidad y responsable.
+  const lugar = (
+    jornada
+      ? [jornada.lugar, comunidad]
+      : [comunidad, publicacion.dependencia ?? proyecto?.dependencia]
+  )
     .filter(Boolean)
     .join(' · ');
+  const hayLugar = Boolean(jornada?.lugar ?? comunidad);
 
   return (
     <View style={{ width: ancho, height: alto }} className="bg-surface dark:bg-surface-dark">
@@ -98,29 +120,42 @@ export const PublicacionSlide = memo(function PublicacionSlide({
         </View>
       )}
 
+      {/* Plan Maestro 8.3: lo interno se distingue de lo publico a simple vista. */}
+      {publicacion.interna && !alerta && (
+        <View className="absolute left-0 right-0 top-0 flex-row items-center justify-center gap-2 bg-secondary-700 px-3 py-1.5">
+          <Icon as={Lock} size={14} className="text-white" />
+          <Text variant="plain" className="text-xs font-bold uppercase tracking-wide text-white">
+            Contenido interno
+          </Text>
+        </View>
+      )}
+
       <View className="flex-1 gap-1.5 px-4 pt-3" style={{ paddingBottom: margenInferior + 16 }}>
         <InsigniasPublicacion publicacion={publicacion} tarjeta={tarjeta} />
 
-        {incidente && incidente.nombre !== publicacion.titulo && (
+        {entidad && entidad.nombre !== publicacion.titulo && (
           <Text variant="label" numberOfLines={1}>
-            {incidente.nombre}
+            {entidad.nombre}
           </Text>
         )}
         <Text variant="heading" className="text-xl leading-6" numberOfLines={2}>
           {publicacion.titulo}
         </Text>
 
-        <Meta
-          icono={CalendarClock}
-          texto={
-            incidente
-              ? `Reportado ${formatDateTime(incidente.fechaReporte)}`
-              : formatDateTime(publicacion.fechaPublicacion)
-          }
-        />
-        {lugar !== '' && (
-          <Meta icono={publicacion.comunidad || incidente?.comunidad ? MapPin : Landmark} texto={lugar} />
+        {jornada ? (
+          <Meta icono={CalendarDays} texto={cuandoEs(jornada)} />
+        ) : (
+          <Meta
+            icono={CalendarClock}
+            texto={
+              incidente
+                ? `Reportado ${formatDateTime(incidente.fechaReporte)}`
+                : formatDateTime(publicacion.fechaPublicacion)
+            }
+          />
         )}
+        {lugar !== '' && <Meta icono={hayLugar ? MapPin : Landmark} texto={lugar} />}
+        {proyecto?.avance != null && <BarraAvance avance={proyecto.avance} compacta />}
 
         {/* Ocupa lo que sobre y recorta: nunca empuja las acciones. */}
         <View className="flex-1 overflow-hidden pt-1">

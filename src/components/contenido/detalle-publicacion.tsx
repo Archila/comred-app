@@ -1,11 +1,17 @@
 import {
   CalendarClock,
+  CalendarDays,
   ChevronRight,
+  ClipboardList,
+  Clock,
   FileText,
+  Flag,
   Landmark,
   MapPin,
+  Phone,
   Share2,
   ShieldCheck,
+  Stethoscope,
   TriangleAlert,
   Users,
   X,
@@ -17,19 +23,29 @@ import { Modal, Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { VERIFICACION_INCIDENTE } from '@/constants';
-import { formatDate, formatDateTime } from '@/lib';
+import { formatDate, formatDateOnly, formatDateTime } from '@/lib';
 import type { Publicacion } from '@/models';
 import { useBrandVars } from '@/store';
 
 import { Button } from '../ui/button';
 import { Icon } from '../ui/icon';
 import { Text } from '../ui/text';
-import { abrirDocumento, abrirUbicacion, compartirPublicacion, ubicacionDe } from './acciones';
+import {
+  abrirDocumento,
+  abrirUbicacion,
+  compartirPublicacion,
+  comunidadDe,
+  diasDe,
+  entidadDe,
+  ubicacionDe,
+} from './acciones';
+import { BarraAvance } from './barra-avance';
 import { InsigniasPublicacion } from './insignias-publicacion';
 
 /**
  * Hoja con todo lo de una publicacion: descripcion completa, datos del
- * incidente y documentos. Es el "Ver mas" y la "informacion adicional
+ * incidente, la jornada o el proyecto, y documentos. Es el "Ver mas" y la
+ * "informacion adicional
  * desplegable" del Plan Maestro (3.3); el visor solo muestra el resumen para
  * que la foto siga siendo protagonista.
  *
@@ -99,7 +115,10 @@ export function DetallePublicacion({
 }
 
 function Contenido({ publicacion }: { publicacion: Publicacion }) {
-  const incidente = publicacion.incidente;
+  const { incidente, jornada, proyecto } = publicacion;
+  const entidad = entidadDe(publicacion);
+  const comunidad = comunidadDe(publicacion);
+  const responsable = publicacion.dependencia ?? proyecto?.dependencia;
   const ubicacion = ubicacionDe(publicacion);
   const documentos = publicacion.media.filter((archivo) => archivo.tipo === 'DOCUMENTO');
   const verificacion = incidente ? VERIFICACION_INCIDENTE[incidente.verificacion] : null;
@@ -112,8 +131,8 @@ function Contenido({ publicacion }: { publicacion: Publicacion }) {
   return (
     <>
       <View className="gap-1">
-        {incidente && incidente.nombre !== publicacion.titulo && (
-          <Text variant="label">{incidente.nombre}</Text>
+        {entidad && entidad.nombre !== publicacion.titulo && (
+          <Text variant="label">{entidad.nombre}</Text>
         )}
         <Text variant="title" className="text-2xl">
           {publicacion.titulo}
@@ -126,25 +145,82 @@ function Contenido({ publicacion }: { publicacion: Publicacion }) {
         {incidente && (
           <Dato icono={TriangleAlert} etiqueta="Reportado" valor={formatDateTime(incidente.fechaReporte)} />
         )}
+        {jornada && (
+          <>
+            {/* Sin horario escrito, la hora de inicio es el unico dato que hay. */}
+            <Dato
+              icono={CalendarDays}
+              etiqueta="Fecha"
+              valor={jornada.horario ? diasDe(jornada) : formatDateTime(jornada.fechaInicio)}
+            />
+            {jornada.horario && <Dato icono={Clock} etiqueta="Horario" valor={jornada.horario} />}
+            {jornada.lugar && <Dato icono={MapPin} etiqueta="Lugar" valor={jornada.lugar} />}
+            {jornada.institucion && (
+              <Dato icono={Users} etiqueta="Organiza" valor={jornada.institucion} />
+            )}
+            {jornada.contacto && <Dato icono={Phone} etiqueta="Contacto" valor={jornada.contacto} />}
+          </>
+        )}
+        {proyecto && (
+          <>
+            {proyecto.fechaInicio && (
+              <Dato icono={CalendarDays} etiqueta="Inicio" valor={formatDateOnly(proyecto.fechaInicio)} />
+            )}
+            {proyecto.fechaFinPrevista && (
+              <Dato
+                icono={Flag}
+                etiqueta="Finalización prevista"
+                valor={formatDateOnly(proyecto.fechaFinPrevista)}
+              />
+            )}
+          </>
+        )}
         <Dato
           icono={CalendarClock}
           etiqueta={publicacion.seccion === 'BOLETINES' ? 'Emitido' : 'Publicado'}
           valor={formatDateTime(publicacion.fechaPublicacion)}
         />
         {actualizada && <Dato icono={CalendarClock} etiqueta="Última actualización" valor={actualizada} />}
-        {publicacion.dependencia && (
-          <Dato icono={Landmark} etiqueta="Responsable" valor={publicacion.dependencia} />
-        )}
-        {(publicacion.comunidad ?? incidente?.comunidad) && (
+        {responsable && <Dato icono={Landmark} etiqueta="Responsable" valor={responsable} />}
+        {comunidad && (
           <Dato
             icono={MapPin}
-            etiqueta="Comunidad"
-            valor={(publicacion.comunidad ?? incidente?.comunidad)!}
+            etiqueta={jornada ? 'Comunidad beneficiada' : 'Comunidad'}
+            valor={comunidad}
           />
         )}
       </View>
 
+      {/* Solo con dato comprobado: sin el no hay barra, que no es lo mismo que 0 %. */}
+      {proyecto?.avance != null && <BarraAvance avance={proyecto.avance} />}
+
       {publicacion.descripcion && <Text variant="body">{publicacion.descripcion}</Text>}
+
+      {jornada && (
+        <>
+          {jornada.descripcion && jornada.descripcion !== publicacion.descripcion && (
+            <Bloque titulo="Sobre la jornada">
+              <Text variant="body">{jornada.descripcion}</Text>
+            </Bloque>
+          )}
+          {jornada.servicios && (
+            <Bloque titulo="Servicios disponibles" icono={Stethoscope}>
+              <Text variant="body">{jornada.servicios}</Text>
+            </Bloque>
+          )}
+          {jornada.requisitos && (
+            <Bloque titulo="Requisitos" icono={ClipboardList}>
+              <Text variant="body">{jornada.requisitos}</Text>
+            </Bloque>
+          )}
+        </>
+      )}
+
+      {proyecto?.descripcion && proyecto.descripcion !== publicacion.descripcion && (
+        <Bloque titulo="Sobre el proyecto">
+          <Text variant="body">{proyecto.descripcion}</Text>
+        </Bloque>
+      )}
 
       {incidente && (
         <>

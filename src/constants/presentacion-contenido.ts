@@ -1,45 +1,64 @@
 import {
   Activity,
+  Apple,
   Backpack,
   BadgeCheck,
+  Brain,
   Building2,
+  CalendarDays,
+  ClipboardList,
   CloudRain,
   Construction,
   DoorOpen,
   Droplets,
   FileText,
   Flame,
+  GraduationCap,
+  HardHat,
   HeartPulse,
   Inbox,
+  Leaf,
+  Megaphone,
   Mountain,
+  PawPrint,
+  School,
   ShieldCheck,
   Siren,
+  Smile,
   Stethoscope,
+  Syringe,
   TreePine,
   TriangleAlert,
   Umbrella,
+  Users,
   Waves,
   Wind,
+  Wrench,
   type LucideIcon,
 } from 'lucide-react-native';
 
 import type {
   CategoriaContenido,
   EstadoIncidente,
+  EstadoJornada,
+  EstadoProyecto,
   SeccionContenido,
   VerificacionIncidente,
 } from '@/models';
 
 /**
  * Como se presentan las secciones de contenido: tarjetas, estados de un
- * incidente y su nivel de verificacion.
+ * incidente, una jornada o un proyecto, y nivel de verificacion.
  *
  * Las clases van completas y literales: Tailwind solo genera las que encuentra
  * escritas tal cual en el codigo.
  */
 
 /** Secciones con pantalla de tarjetas + visor. */
-export type SeccionConVisor = Extract<SeccionContenido, 'REPORTES' | 'BOLETINES'>;
+export type SeccionConVisor = Extract<
+  SeccionContenido,
+  'REPORTES' | 'BOLETINES' | 'JORNADAS' | 'BRIGADAS' | 'PROYECTOS'
+>;
 
 export interface PresentacionSeccion {
   seccion: SeccionConVisor;
@@ -50,7 +69,7 @@ export interface PresentacionSeccion {
   descripcion: string;
   /** Icono de una tarjeta sin icono propio ni coincidencia por nombre. */
   icono: LucideIcon;
-  /** Circulo del icono en la tarjeta: rojo para emergencias, azul para prevencion. */
+  /** Circulo del icono en la tarjeta: rojo para emergencias y respuesta, azul para lo demas. */
   fondoIcono: string;
   textoIcono: string;
 }
@@ -74,6 +93,33 @@ export const PRESENTACION_SECCION: Record<SeccionConVisor, PresentacionSeccion> 
     fondoIcono: 'bg-secondary-500',
     textoIcono: 'text-secondary-foreground',
   },
+  JORNADAS: {
+    seccion: 'JORNADAS',
+    slug: 'jornadas',
+    titulo: 'Jornadas',
+    descripcion: 'Elige un tipo de jornada para ver fechas, lugares y requisitos.',
+    icono: CalendarDays,
+    fondoIcono: 'bg-secondary-500',
+    textoIcono: 'text-secondary-foreground',
+  },
+  BRIGADAS: {
+    seccion: 'BRIGADAS',
+    slug: 'brigadas',
+    titulo: 'Brigadas',
+    descripcion: 'Actividades, capacitaciones y convocatorias de las brigadas.',
+    icono: Users,
+    fondoIcono: 'bg-primary-500',
+    textoIcono: 'text-primary-foreground',
+  },
+  PROYECTOS: {
+    seccion: 'PROYECTOS',
+    slug: 'proyectos',
+    titulo: 'Proyectos actuales',
+    descripcion: 'Elige un tipo de proyecto para seguir su avance.',
+    icono: HardHat,
+    fondoIcono: 'bg-secondary-500',
+    textoIcono: 'text-secondary-foreground',
+  },
 };
 
 /* -------------------------------------------------------------------------- */
@@ -87,31 +133,47 @@ export const PRESENTACION_SECCION: Record<SeccionConVisor, PresentacionSeccion> 
  */
 const ICONOS: Record<string, LucideIcon> = {
   activity: Activity,
+  apple: Apple,
   backpack: Backpack,
+  brain: Brain,
   'building-2': Building2,
+  'calendar-days': CalendarDays,
+  'clipboard-list': ClipboardList,
   'cloud-rain': CloudRain,
   construction: Construction,
   'door-open': DoorOpen,
   droplets: Droplets,
   'file-text': FileText,
   flame: Flame,
+  'graduation-cap': GraduationCap,
+  'hard-hat': HardHat,
   'heart-pulse': HeartPulse,
+  leaf: Leaf,
+  megaphone: Megaphone,
   mountain: Mountain,
+  'paw-print': PawPrint,
+  school: School,
   'shield-check': ShieldCheck,
+  siren: Siren,
+  smile: Smile,
   stethoscope: Stethoscope,
+  syringe: Syringe,
   'tree-pine': TreePine,
   'triangle-alert': TriangleAlert,
   umbrella: Umbrella,
+  users: Users,
   waves: Waves,
   wind: Wind,
+  wrench: Wrench,
 };
 
 /**
  * Para las tarjetas que se crearon sin icono: se elige por palabras del
  * nombre, en este orden. Cubre las categorias iniciales del Plan Maestro
- * (5.1 y 6). El orden importa: "forestal" va antes que "incendio" para que el
- * incendio forestal lleve el arbol, y "prevencion" va al final para que
- * "Prevencion de incendios" o "de inundaciones" lleven el icono del peligro.
+ * (5.1, 6, 7, 8 y 10). El orden importa: "forestal" va antes que "incendio"
+ * para que el incendio forestal lleve el arbol, "mascota" antes que "vacuna"
+ * para que la vacunacion de perros y gatos lleve la huella, y lo generico
+ * ("prevencion", "brigada", "proyecto") va al final para que gane lo concreto.
  */
 const PALABRAS: [RegExp, LucideIcon][] = [
   [/desliza|derrumbe/, Mountain],
@@ -122,13 +184,26 @@ const PALABRAS: [RegExp, LucideIcon][] = [
   [/lluvia|tormenta/, CloudRain],
   [/viento/, Wind],
   [/carretera|camino|vial/, Construction],
-  [/infraestructura|edific/, Building2],
+  [/educativ|escuela|escolar/, School],
+  [/infraestructura|edific|comunitario/, Building2],
   [/mochila/, Backpack],
   [/rcp|reanimaci|auxilio/, HeartPulse],
-  [/higiene|saneamiento/, Droplets],
+  [/higiene|saneamiento|agua/, Droplets],
   [/evacua/, DoorOpen],
-  [/salud/, Stethoscope],
-  [/preparaci|prevenci/, ShieldCheck],
+  [/mascota|perro|gato|veterinari/, PawPrint],
+  [/vacuna/, Syringe],
+  [/psicol/, Brain],
+  [/odontol|dental/, Smile],
+  [/nutrici/, Apple],
+  [/medic|salud/, Stethoscope],
+  [/capacitaci/, GraduationCap],
+  [/simulacro/, ClipboardList],
+  [/equip/, Wrench],
+  [/convocatoria/, Megaphone],
+  [/ambiente|reforesta/, Leaf],
+  [/mitigaci|preparaci|prevenci/, ShieldCheck],
+  [/brigada/, Users],
+  [/proyecto|\bobra/, HardHat],
 ];
 
 /** Sin tildes y en minusculas, para comparar nombres escritos de cualquier forma. */
@@ -154,10 +229,10 @@ export function iconoDeCategoria(
 export const ICONO_SIN_PUBLICACIONES = Inbox;
 
 /* -------------------------------------------------------------------------- */
-/* Incidentes                                                                  */
+/* Estados: incidentes, jornadas y proyectos                                   */
 /* -------------------------------------------------------------------------- */
 
-interface EstiloInsignia {
+export interface EstiloInsignia {
   etiqueta: string;
   fondo: string;
   texto: string;
@@ -187,6 +262,54 @@ export const ESTADO_INCIDENTE: Record<EstadoIncidente, EstiloInsignia> = {
   },
   CERRADO: {
     etiqueta: 'Cerrado',
+    fondo: 'bg-surface-sunken',
+    texto: 'text-content-muted',
+  },
+};
+
+/** Plan Maestro 7: proximas, en desarrollo, finalizadas o canceladas. */
+export const ESTADO_JORNADA: Record<EstadoJornada, EstiloInsignia> = {
+  PROXIMA: {
+    etiqueta: 'Próxima',
+    fondo: 'bg-secondary-100',
+    texto: 'text-secondary-600',
+  },
+  EN_DESARROLLO: {
+    etiqueta: 'En desarrollo',
+    fondo: 'bg-success-100',
+    texto: 'text-success-700',
+  },
+  FINALIZADA: {
+    etiqueta: 'Finalizada',
+    fondo: 'bg-surface-sunken',
+    texto: 'text-content-muted',
+  },
+  CANCELADA: {
+    etiqueta: 'Cancelada',
+    fondo: 'bg-danger-100',
+    texto: 'text-danger-700',
+  },
+};
+
+/** Plan Maestro 10: estado del proyecto. */
+export const ESTADO_PROYECTO: Record<EstadoProyecto, EstiloInsignia> = {
+  PLANIFICADO: {
+    etiqueta: 'Planificado',
+    fondo: 'bg-secondary-100',
+    texto: 'text-secondary-600',
+  },
+  EN_EJECUCION: {
+    etiqueta: 'En ejecución',
+    fondo: 'bg-success-100',
+    texto: 'text-success-700',
+  },
+  SUSPENDIDO: {
+    etiqueta: 'Suspendido',
+    fondo: 'bg-warning-100',
+    texto: 'text-warning-700',
+  },
+  FINALIZADO: {
+    etiqueta: 'Finalizado',
     fondo: 'bg-surface-sunken',
     texto: 'text-content-muted',
   },

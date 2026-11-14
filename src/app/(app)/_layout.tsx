@@ -55,6 +55,9 @@ export default function AppLayout() {
         */}
         <Tabs.Screen name="reportes" />
         <Tabs.Screen name="boletines" />
+        <Tabs.Screen name="jornadas" />
+        <Tabs.Screen name="brigadas" />
+        <Tabs.Screen name="proyectos" />
         {/*
           Envio e historial de avisos. `Tabs.Protected` saca la ruta entera, no
           solo la opcion del menu: un vecino no puede llegar a ella ni con un
