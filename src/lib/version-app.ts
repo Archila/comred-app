@@ -31,7 +31,8 @@ export function getVersionCodigo(): number | null {
 /**
  * Ante la duda, `AL_DIA`: sin red, sin respuesta o sin versiones configuradas
  * no se bloquea una app de emergencias. El API vuelve a comprobar el minimo
- * en el login, que es donde no se puede esquivar.
+ * en cada peticion (cabecera `x-app-version`), que es donde no se puede
+ * esquivar: responde 426 y el `httpClient` refresca esta consulta.
  */
 export function evaluarVersion(
   instalada: number | null,

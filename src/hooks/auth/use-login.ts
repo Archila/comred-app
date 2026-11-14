@@ -1,9 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { authActions } from '@/actions';
-import { ApiException, getErrorMessage } from '@/api';
+import { getErrorMessage } from '@/api';
 import { env } from '@/config';
-import { QUERY_KEYS } from '@/constants';
 import { useAuthStore } from '@/store';
 import type { LoginPayload, LoginResponse } from '@/models';
 
@@ -31,14 +30,8 @@ export function useLogin() {
       // Sesion nueva: se descarta la cache del usuario anterior.
       queryClient.clear();
     },
-    onError: (error) => {
-      // 426: el API rechazo este binario por obsoleto. La version en cache
-      // estaba desfasada (el minimo subio hace menos de 15 min); al refrescarla
-      // el navegador raiz levanta el muro de actualizacion.
-      if (error instanceof ApiException && error.statusCode === 426) {
-        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.organizaciones.all });
-      }
-    },
+    // Un 426 (binario obsoleto) no se trata aqui: el `httpClient` lo atiende
+    // para todas las peticiones y levanta el muro de actualizacion.
   });
 
   return {

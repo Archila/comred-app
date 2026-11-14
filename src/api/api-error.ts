@@ -41,6 +41,11 @@ export class ApiException extends Error {
     return this.statusCode === 403;
   }
 
+  /** 426: el binario esta por debajo de la version minima de la organizacion. */
+  get isVersionObsoleta(): boolean {
+    return this.statusCode === 426;
+  }
+
   /** Error de validacion o de negocio: el mensaje es apto para mostrarse. */
   get isValidationError(): boolean {
     return this.statusCode === 400 || this.statusCode === 422;

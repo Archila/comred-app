@@ -141,7 +141,7 @@ function Detalle({
           </View>
         }
         ListEmptyComponent={
-          !auditoria || repartiendo ? null : envios.isLoading ? (
+          !auditoria || repartiendo ? undefined : envios.isLoading ? (
             <ActivityIndicator color={brand.primary} />
           ) : envios.isError ? (
             <ErrorState error={envios.error} onRetry={() => envios.refetch()} />
@@ -171,7 +171,7 @@ function Detalle({
           if (envios.hasNextPage && !envios.isFetchingNextPage) void envios.fetchNextPage();
         }}
         ListFooterComponent={
-          envios.isFetchingNextPage ? <ActivityIndicator color={brand.primary} /> : null
+          envios.isFetchingNextPage ? <ActivityIndicator color={brand.primary} /> : undefined
         }
       />
     </Screen>

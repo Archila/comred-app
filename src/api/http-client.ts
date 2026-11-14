@@ -2,7 +2,7 @@ import axios, { isAxiosError, type AxiosRequestConfig, type AxiosInstance } from
 
 import { env } from '@/config';
 import { ENDPOINTS, STORAGE_KEYS } from '@/constants';
-import { secureStorage } from '@/lib';
+import { getVersionCodigo, secureStorage } from '@/lib';
 import type { ApiResponse } from '@/models';
 
 import { toApiException } from './api-error';
@@ -14,8 +14,10 @@ import { toApiException } from './api-error';
  *   1. Base URL y timeout desde `.env`.
  *   2. Inyectar el header `Authorization: Bearer <token>`.
  *   3. Normalizar cualquier error a `ApiException`.
- *   4. Avisar al store de sesion cuando el API responde 401, o al de
+ *   4. Enviar la version del binario (`x-app-version`) en cada peticion.
+ *   5. Avisar al store de sesion cuando el API responde 401, o al de
  *      dispositivo si el 401 viene de una ruta del aparato.
+ *   6. Avisar cuando el API responde 426 (version obsoleta).
  *
  * Las pantallas NUNCA importan este archivo: solo lo usan los `actions`.
  */
@@ -96,6 +98,29 @@ export function setDispositivoRechazadoHandler(handler: UnauthorizedHandler | nu
   onDispositivoRechazado = handler;
 }
 
+/* -------------------------------------------------------------------------- */
+/* Version de la app                                                           */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * `versionCode` del binario, constante mientras la app esta abierta. Viaja en
+ * TODAS las peticiones: el API rechaza con 426 cualquier accion de un binario
+ * por debajo de la minima, no solo el login. El nombre tiene que coincidir con
+ * `HEADER_APP_VERSION` del API. En web es `null` y no se envia: ahi no aplica.
+ */
+const VERSION_APP = getVersionCodigo();
+
+let onVersionObsoleta: UnauthorizedHandler | null = null;
+
+/**
+ * Registra que hacer cuando el API responde 426. Lo conecta `QueryProvider`:
+ * refresca la version de la organizacion para que el navegador raiz levante
+ * el muro de actualizacion.
+ */
+export function setVersionObsoletaHandler(handler: UnauthorizedHandler | null): void {
+  onVersionObsoleta = handler;
+}
+
 function esRutaDeDispositivo(error: unknown): boolean {
   const url = isAxiosError(error) ? error.config?.url : undefined;
   return url?.startsWith(`${ENDPOINTS.dispositivos.base}/`) ?? false;
@@ -127,6 +152,10 @@ httpClient.interceptors.request.use(async (config) => {
     config.headers['x-dispositivo-key'] = dispositivoCredentials.clave;
   }
 
+  if (VERSION_APP !== null) {
+    config.headers['x-app-version'] = String(VERSION_APP);
+  }
+
   if (env.isDevelopment) {
     console.log(`[http] ${config.method?.toUpperCase()} ${config.baseURL ?? ''}${config.url ?? ''}`);
   }
@@ -146,6 +175,10 @@ httpClient.interceptors.response.use(
         authToken = null;
         onUnauthorized?.();
       }
+    }
+
+    if (exception.isVersionObsoleta) {
+      onVersionObsoleta?.();
     }
 
     if (env.isDevelopment) {

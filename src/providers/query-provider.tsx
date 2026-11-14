@@ -2,7 +2,8 @@ import { focusManager, QueryClientProvider } from '@tanstack/react-query';
 import { useEffect, useState, type PropsWithChildren } from 'react';
 import { AppState, Platform } from 'react-native';
 
-import { createQueryClient } from '@/api';
+import { createQueryClient, setVersionObsoletaHandler } from '@/api';
+import { QUERY_KEYS } from '@/constants';
 
 /**
  * Provee la cache de TanStack Query.
@@ -27,6 +28,21 @@ export function QueryProvider({ children }: PropsWithChildren) {
 
     return () => subscription.remove();
   }, []);
+
+  // 426 en cualquier peticion: la version en cache esta desfasada (el minimo
+  // subio hace menos de 15 min). Al refrescarla, `useVersionApp` pasa a
+  // OBLIGATORIA y el navegador raiz levanta el muro. `cancelRefetch: false`
+  // porque varias peticiones pueden fallar a la vez: basta con una consulta.
+  useEffect(() => {
+    setVersionObsoletaHandler(() => {
+      void queryClient.invalidateQueries(
+        { queryKey: [...QUERY_KEYS.organizaciones.all, 'version'] },
+        { cancelRefetch: false },
+      );
+    });
+
+    return () => setVersionObsoletaHandler(null);
+  }, [queryClient]);
 
   return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
 }

@@ -90,7 +90,7 @@ export default function AvisosScreen() {
         refreshControl={
           <RefreshControl
             refreshing={isRefetching && !isFetchingNextPage}
-            onRefresh={() => refetch()}
+            onRefresh={() => void refetch()}
             colors={[brand.primary]}
             tintColor={brand.primary}
           />
@@ -100,7 +100,7 @@ export default function AvisosScreen() {
           if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
         }}
         ListFooterComponent={
-          isFetchingNextPage ? <ActivityIndicator color={brand.primary} /> : null
+          isFetchingNextPage ? <ActivityIndicator color={brand.primary} /> : undefined
         }
       />
     </Screen>

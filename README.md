@@ -243,3 +243,85 @@ npm run web        # abrir en navegador
 npm run lint
 npx tsc --noEmit   # verificación de tipos
 ```
+
+## Despliegue en un dispositivo físico (Android)
+
+**Requisitos:** Android SDK instalado (incluye `adb`), el teléfono con la depuración
+USB activada y conectado por cable, y el teléfono y la PC en la misma red Wi‑Fi.
+Para confirmar que la PC ve el teléfono:
+
+```bash
+adb devices        # debe aparecer el teléfono con estado "device"
+```
+
+### 1. Apuntar la app al API de tu PC
+
+En el `.env`, con la IP de tu PC en la red local (se obtiene con `ipconfig`):
+
+```
+EXPO_PUBLIC_API_URL=http://192.168.X.X:3000/v1
+```
+
+El API tiene que estar corriendo (`npm run start:dev` en `api-comred`).
+
+### 2. Regenerar `android/` y compilar
+
+```bash
+npx expo prebuild --platform android --clean
+npx expo run:android --device
+```
+
+`--device` muestra la lista de dispositivos para elegir el teléfono. El comando
+compila, instala la app y arranca Metro. La primera compilación tarda varios minutos.
+
+**`prebuild --clean` es obligatorio cuando cambias `app.json` o `app.config.js`**
+(versión, nombre, paquete, plugins, iconos). `expo run:android` solo genera `android/`
+si la carpeta no existe; si ya existe, compila lo que haya, aunque esté desactualizado.
+La carpeta está en `.gitignore` y se regenera desde la configuración, así que borrarla
+no pierde nada. `google-services.json` se vuelve a copiar porque está declarado en
+`app.json`.
+
+**Compila en debug, como arriba.** Un build `--variant release` bloquea por defecto el
+tráfico `http://`, y la app no podría conectarse a un API local sin HTTPS.
+
+## Publicar una versión nueva
+
+La versión se cambia en **un solo sitio**: `expo.version` de `app.json`. `app.config.js`
+calcula de ahí el `versionCode` (`1.1.1` → `10101`). No hay que escribir el
+`versionCode` a mano.
+
+1. Subir `version` en `app.json` (por ejemplo, `"1.1.0"` → `"1.1.1"`).
+2. Confirmar el código que se va a generar:
+
+   ```bash
+   npx expo config --type public    # buscar "versionCode: 10101"
+   ```
+
+3. Regenerar y compilar (sección anterior). La versión se lee del **binario**, así
+   que recargar con Metro no basta: hay que volver a instalar.
+4. Confirmar lo que quedó instalado en el teléfono:
+
+   ```bash
+   adb shell "dumpsys package gt.comred.xela | grep version"
+   ```
+
+5. Ya con la versión publicada, un administrador global actualiza la organización
+   desde `PUT /comred/organizaciones/:id`:
+
+   ```json
+   { "versionUltima": 10101, "versionMinima": 10101 }
+   ```
+
+   - `versionUltima`: la app avisa (sin bloquear) a quien tenga una versión anterior.
+   - `versionMinima`: solo se sube cuando las versiones anteriores ya no deben
+     usarse. A partir de ahí el API responde **426** a cualquier petición de un
+     binario inferior, y la app muestra la pantalla de actualización obligatoria.
+   - `NULL` en cualquiera de las dos desactiva ese control.
+
+**No subas `versionMinima` antes de publicar.** Si queda por encima de la versión que
+tienen los teléfonos, el API los bloquea a todos, incluidos los que acaban de
+actualizar.
+
+**Para probar el bloqueo:** sube temporalmente `versionMinima` un número por encima de
+la versión instalada (`10102`). La siguiente petición de la app recibe 426 y aparece
+la pantalla de actualización. Después regresa el valor.

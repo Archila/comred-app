@@ -92,7 +92,7 @@ function Historial({ cabecera }: { cabecera: ReactNode }) {
         data={mensajes}
         keyExtractor={(mensaje) => mensaje.id}
         contentContainerClassName="grow gap-3 p-4"
-        ListHeaderComponent={cabecera ? <View className="pb-1">{cabecera}</View> : null}
+        ListHeaderComponent={cabecera ? <View className="pb-1">{cabecera}</View> : undefined}
         ListEmptyComponent={
           <EmptyState
             icon={Megaphone}
@@ -109,7 +109,7 @@ function Historial({ cabecera }: { cabecera: ReactNode }) {
         refreshControl={
           <RefreshControl
             refreshing={isRefetching && !isFetchingNextPage}
-            onRefresh={() => refetch()}
+            onRefresh={() => void refetch()}
             colors={[brand.primary]}
             tintColor={brand.primary}
           />
@@ -119,7 +119,7 @@ function Historial({ cabecera }: { cabecera: ReactNode }) {
           if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
         }}
         ListFooterComponent={
-          isFetchingNextPage ? <ActivityIndicator color={brand.primary} /> : null
+          isFetchingNextPage ? <ActivityIndicator color={brand.primary} /> : undefined
         }
       />
     </Screen>
