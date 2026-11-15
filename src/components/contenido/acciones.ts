@@ -77,9 +77,9 @@ export async function compartirPublicacion(publicacion: Publicacion): Promise<vo
 }
 
 /**
- * Abre la ubicacion en la app de mapas del telefono. El mapa propio del
- * municipio (Plan Maestro, 9) aun no existe; cuando exista, este es el punto
- * donde cambiar el destino.
+ * Abre la ubicacion en la app de mapas del telefono, que sabe trazar la ruta.
+ * La usan las publicaciones y "Como llegar" del mapa del municipio
+ * (`components/mapa`), que muestra donde estan las cosas pero no navega.
  */
 export async function abrirUbicacion(latitud: number, longitud: number, etiqueta: string) {
   const nombre = encodeURIComponent(etiqueta);

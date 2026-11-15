@@ -58,6 +58,8 @@ export default function AppLayout() {
         <Tabs.Screen name="jornadas" />
         <Tabs.Screen name="brigadas" />
         <Tabs.Screen name="proyectos" />
+        {/* Al ser pestana, el mapa conserva camara y filtros al ir y volver. */}
+        <Tabs.Screen name="mapa" options={{ title: 'Mapa general del municipio' }} />
         {/*
           Envio e historial de avisos. `Tabs.Protected` saca la ruta entera, no
           solo la opcion del menu: un vecino no puede llegar a ella ni con un

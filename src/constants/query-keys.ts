@@ -73,6 +73,13 @@ export const QUERY_KEYS = {
       [...QUERY_KEYS.contenido.all, 'proyectos', params ?? {}] as const,
   },
 
+  /** Mapa del municipio. No depende de la sesion: todo es publico. */
+  mapa: {
+    all: ['mapa'] as const,
+    capas: () => [...QUERY_KEYS.mapa.all, 'capas'] as const,
+    elemento: (id: string) => [...QUERY_KEYS.mapa.all, 'elemento', id] as const,
+  },
+
   organizaciones: {
     all: ['organizaciones'] as const,
     list: (params?: PaginationParams) =>

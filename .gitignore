@@ -43,3 +43,6 @@ example
 # generated native folders
 /ios
 /android
+
+# worker de maplibre-gl para el mapa web: lo copia el postinstall
+/public/maplibre-gl-worker.mjs

@@ -32,7 +32,7 @@ export const SECCIONES_MENU: SeccionMenu[] = [
   { slug: 'boletines', etiqueta: 'Boletines', icono: FileText, ruta: '/boletines' },
   { slug: 'jornadas', etiqueta: 'Jornadas', icono: CalendarDays, ruta: '/jornadas' },
   { slug: 'brigadas', etiqueta: 'Brigadas', icono: Users, ruta: '/brigadas' },
-  { slug: 'mapa', etiqueta: 'Mapa general del municipio', icono: MapPin },
+  { slug: 'mapa', etiqueta: 'Mapa general del municipio', icono: MapPin, ruta: '/mapa' },
   { slug: 'proyectos', etiqueta: 'Proyectos actuales', icono: HardHat, ruta: '/proyectos' },
   { slug: 'cocodes', etiqueta: 'COCODES', icono: UsersRound },
 ];

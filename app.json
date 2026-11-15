@@ -45,7 +45,16 @@
       ],
       "@react-native-firebase/app",
       "@react-native-firebase/messaging",
-      "expo-video"
+      "expo-video",
+      "@maplibre/maplibre-react-native",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "COMRED usa tu ubicación solo para mostrarte en el mapa del municipio. No se guarda ni se envía.",
+          "isAndroidBackgroundLocationEnabled": false,
+          "isAndroidForegroundServiceEnabled": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

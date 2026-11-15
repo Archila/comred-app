@@ -110,6 +110,17 @@ export const ENDPOINTS = {
     proyectos: '/comred/contenido/publico/proyectos',
   },
 
+  /**
+   * Mapa general del municipio. Como `contenido`: solo GET y con las
+   * cabeceras del dispositivo.
+   */
+  mapa: {
+    /** Capas, figuras y contorno en una sola respuesta. */
+    capas: '/comred/mapa/publico/capas',
+    /** Ficha de un elemento al tocarlo. */
+    elementoById: (id: string) => `/comred/mapa/publico/elementos/${id}`,
+  },
+
   catalogo: {
     arbol: '/comred/catalogo/arbol',
     categorias: '/comred/catalogo/categorias',
