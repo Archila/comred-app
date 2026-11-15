@@ -7,11 +7,9 @@ import {
   NativeUserLocation,
   type CameraRef,
 } from '@maplibre/maplibre-react-native';
-import type { Point } from 'geojson';
 import { useImperativeHandle, useMemo, useRef } from 'react';
 
-import { iconoDeCapa, MAPA_CONFIG } from '@/constants';
-import type { FiguraMapa } from '@/models';
+import { MAPA_CONFIG } from '@/constants';
 
 import {
   CAPA_LIMITE,
@@ -21,6 +19,7 @@ import {
   MARGEN_ENCUADRE,
 } from './estilos-capas';
 import { PinMarcador } from './pin-marcador';
+import { MARGEN_TOQUE_MARCADOR_MS, puntosVisibles } from './puntos';
 import type { MapaVistaProps } from './tipos';
 
 /**
@@ -29,8 +28,13 @@ import type { MapaVistaProps } from './tipos';
  * Areas y lineas van en una sola fuente GeoJSON, con capas que filtran por
  * tipo y por capa encendida. Los puntos son marcadores con el icono de su
  * capa: un municipio tiene decenas o pocos cientos, y un icono se reconoce
- * mejor que un circulo de color. Si algun dia son miles, pasarlos a la capa
- * `circle` que ya usa la version web.
+ * mejor que un circulo de color.
+ *
+ * TOQUES. Un punto se puede tocar por dos caminos, y los dos abren su ficha:
+ * el marcador (`Marker.onPress`) y la zona de toque invisible de la fuente.
+ * El `onPress` del mapa (tocar en vacio cierra la ficha) ignora el toque que
+ * acaba de abrir un marcador: si no, la ficha se abriria y se cerraria a la
+ * vez.
  */
 export function MapaVista({
   capas,
@@ -41,6 +45,7 @@ export function MapaVista({
   ref,
 }: MapaVistaProps) {
   const camara = useRef<CameraRef>(null);
+  const ultimoToqueMarcador = useRef(0);
 
   useImperativeHandle(
     ref,
@@ -57,23 +62,19 @@ export function MapaVista({
   );
 
   const capasEstilo = useMemo(
-    () => capasDeElementos(categoriasActivas, seleccionadoId, false),
+    () => capasDeElementos(categoriasActivas, seleccionadoId),
     [categoriasActivas, seleccionadoId],
   );
 
-  const puntos = useMemo(() => {
-    const activas = new Set(categoriasActivas);
-    const iconos = new Map(capas.categorias.map((c) => [c.id, iconoDeCapa(c)]));
+  const puntos = useMemo(
+    () => puntosVisibles(capas, categoriasActivas),
+    [capas, categoriasActivas],
+  );
 
-    return capas.elementos.features
-      .filter(
-        (figura): figura is FiguraMapa & { geometry: Point } =>
-          figura.properties.tipoGeometria === 'PUNTO' &&
-          figura.geometry.type === 'Point' &&
-          activas.has(figura.properties.categoriaId),
-      )
-      .map((figura) => ({ figura, icono: iconos.get(figura.properties.categoriaId) }));
-  }, [capas, categoriasActivas]);
+  const seleccionarDesdeMarcador = (id: string) => {
+    ultimoToqueMarcador.current = Date.now();
+    onSeleccionar(id);
+  };
 
   return (
     <MapaNativo
@@ -82,7 +83,10 @@ export function MapaVista({
       logo={false}
       compass
       attributionPosition={{ bottom: 8, left: 8 }}
-      onPress={() => onSeleccionar(null)}
+      onPress={() => {
+        if (Date.now() - ultimoToqueMarcador.current < MARGEN_TOQUE_MARCADOR_MS) return;
+        onSeleccionar(null);
+      }}
     >
       <Camera
         ref={camara}
@@ -101,7 +105,7 @@ export function MapaVista({
           // Sin esto el toque sube al `Map`, que deselecciona.
           evento.stopPropagation();
           const id = evento.nativeEvent.features[0]?.properties?.id;
-          if (typeof id === 'string') onSeleccionar(id);
+          if (typeof id === 'string') seleccionarDesdeMarcador(id);
         }}
       >
         {capasEstilo.map((capa) => (
@@ -115,24 +119,24 @@ export function MapaVista({
         </GeoJSONSource>
       )}
 
-      {puntos.map(({ figura, icono }) => {
-        const [longitud, latitud] = figura.geometry.coordinates;
-        return (
-          <Marker
-            key={figura.properties.id}
-            id={figura.properties.id}
-            lngLat={[longitud, latitud]}
-            anchor="bottom"
-            onPress={() => onSeleccionar(figura.properties.id)}
-          >
-            <PinMarcador
-              color={figura.properties.color}
-              icono={icono ?? iconoDeCapa({ icono: null, nombre: '' })}
-              seleccionado={figura.properties.id === seleccionadoId}
-            />
-          </Marker>
-        );
-      })}
+      {puntos.map((punto) => (
+        <Marker
+          key={punto.id}
+          id={punto.id}
+          lngLat={punto.coordenadas}
+          anchor="bottom"
+          onPress={(evento) => {
+            evento.stopPropagation();
+            seleccionarDesdeMarcador(punto.id);
+          }}
+        >
+          <PinMarcador
+            color={punto.color}
+            icono={punto.icono}
+            seleccionado={punto.id === seleccionadoId}
+          />
+        </Marker>
+      ))}
 
       {/* El punto azul del sistema. Solo cuando el usuario pidio ubicarse. */}
       {miUbicacion && <NativeUserLocation />}

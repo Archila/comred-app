@@ -8,6 +8,7 @@ import type {
   Marker as MarcadorGl,
 } from 'maplibre-gl';
 import { useEffect, useImperativeHandle, useRef, useState, type ComponentRef } from 'react';
+import { createRoot, type Root } from 'react-dom/client';
 import { View } from 'react-native';
 
 import { MAPA_CONFIG } from '@/constants';
@@ -20,6 +21,8 @@ import {
   FUENTE_LIMITE,
   MARGEN_ENCUADRE,
 } from './estilos-capas';
+import { PinMarcador } from './pin-marcador';
+import { MARGEN_TOQUE_MARCADOR_MS, puntosVisibles } from './puntos';
 import type { MapaVistaProps } from './tipos';
 
 type MaplibreGl = typeof import('maplibre-gl');
@@ -28,6 +31,19 @@ const COLECCION_VACIA = { type: 'FeatureCollection' as const, features: [] };
 
 /** Lo deja ahi `scripts/copiar-worker-maplibre.js` (ver el comentario de `MapaVista`). */
 const URL_WORKER = '/maplibre-gl-worker.mjs';
+
+/** Un punto en el mapa: el marcador de maplibre-gl y la raiz de React que lo pinta. */
+interface Pin {
+  marcador: MarcadorGl;
+  raiz: Root;
+}
+
+function quitarPin(pin: Pin) {
+  pin.marcador.remove();
+  // Desmontar una raiz mientras React aun pinta la pantalla da un aviso: se
+  // deja para despues del ciclo actual.
+  setTimeout(() => pin.raiz.unmount(), 0);
+}
 
 /**
  * Las capas se escriben con los tipos de la especificacion que trae el
@@ -40,9 +56,13 @@ function aGl(capa: unknown): AddLayerObject {
 
 /**
  * Mapa en el navegador: maplibre-gl, con las mismas capas que la version
- * nativa (`estilos-capas.ts`). Aqui los puntos son circulos de color: un
- * marcador con icono exigiria montar un componente de React por punto fuera
- * del arbol.
+ * nativa (`estilos-capas.ts`).
+ *
+ * PUNTOS. Son el mismo `PinMarcador` que en el telefono: cada uno es un
+ * `Marker` de maplibre-gl cuyo elemento del DOM se pinta con su propia raiz
+ * de React (`createRoot`), porque vive fuera del arbol de la pantalla. Al
+ * cambiar la seleccion solo se vuelve a pintar esa raiz; al cambiar los
+ * datos o los filtros, se quitan los que sobran y se crean los que faltan.
  *
  * WORKER. maplibre-gl 6 busca su worker junto a su propio archivo
  * (`import.meta.url`), que deja de existir en cuanto Metro lo empaqueta. Por
@@ -66,6 +86,8 @@ export function MapaVista({
   const mapa = useRef<MapaGl | null>(null);
   const libreria = useRef<MaplibreGl | null>(null);
   const marcadorUbicacion = useRef<MarcadorGl | null>(null);
+  const pines = useRef(new Map<string, Pin>());
+  const ultimoToqueMarcador = useRef(0);
   const [listo, setListo] = useState(false);
 
   // El clic se registra una vez; lee siempre la ultima funcion.
@@ -119,12 +141,14 @@ export function MapaVista({
       instancia.on('load', () => {
         instancia.addSource(FUENTE_ELEMENTOS, { type: 'geojson', data: COLECCION_VACIA });
         instancia.addSource(FUENTE_LIMITE, { type: 'geojson', data: COLECCION_VACIA });
-        for (const capa of capasDeElementos([], null, true)) instancia.addLayer(aGl(capa));
+        for (const capa of capasDeElementos([], null)) instancia.addLayer(aGl(capa));
         instancia.addLayer(aGl(CAPA_LIMITE));
         setListo(true);
       });
 
       instancia.on('click', (evento) => {
+        // El clic en un marcador tambien llega aqui: no es un clic en vacio.
+        if (Date.now() - ultimoToqueMarcador.current < MARGEN_TOQUE_MARCADOR_MS) return;
         const [figura] = instancia.queryRenderedFeatures(evento.point, {
           layers: CAPAS_TOCABLES,
         });
@@ -143,8 +167,11 @@ export function MapaVista({
       mapa.current = instancia;
     });
 
+    const pinesMontados = pines.current;
     return () => {
       cancelado = true;
+      for (const pin of pinesMontados.values()) quitarPin(pin);
+      pinesMontados.clear();
       mapa.current?.remove();
       mapa.current = null;
     };
@@ -164,11 +191,59 @@ export function MapaVista({
   useEffect(() => {
     const instancia = mapa.current;
     if (!listo || !instancia) return;
-    for (const capa of capasDeElementos(categoriasActivas, seleccionadoId, true)) {
+    for (const capa of capasDeElementos(categoriasActivas, seleccionadoId)) {
       const { filter } = aGl(capa) as { filter?: FilterSpecification };
       if (filter) instancia.setFilter(capa.id, filter);
     }
   }, [listo, categoriasActivas, seleccionadoId]);
+
+  // Marcadores de los puntos.
+  useEffect(() => {
+    const instancia = mapa.current;
+    const maplibregl = libreria.current;
+    if (!listo || !instancia || !maplibregl) return;
+
+    const visibles = puntosVisibles(capas, categoriasActivas);
+    const ids = new Set(visibles.map((punto) => punto.id));
+
+    for (const [id, pin] of pines.current) {
+      if (!ids.has(id)) {
+        quitarPin(pin);
+        pines.current.delete(id);
+      }
+    }
+
+    for (const punto of visibles) {
+      let pin = pines.current.get(punto.id);
+      if (!pin) {
+        const elemento = document.createElement('div');
+        elemento.style.cursor = 'pointer';
+        elemento.setAttribute('role', 'button');
+        elemento.addEventListener('click', (evento) => {
+          evento.stopPropagation();
+          ultimoToqueMarcador.current = Date.now();
+          alSeleccionar.current(punto.id);
+        });
+        pin = {
+          marcador: new maplibregl.Marker({ element: elemento, anchor: 'bottom' })
+            .setLngLat(punto.coordenadas)
+            .addTo(instancia),
+          raiz: createRoot(elemento),
+        };
+        pines.current.set(punto.id, pin);
+      } else {
+        pin.marcador.setLngLat(punto.coordenadas);
+      }
+
+      pin.raiz.render(
+        <PinMarcador
+          color={punto.color}
+          icono={punto.icono}
+          seleccionado={punto.id === seleccionadoId}
+        />,
+      );
+    }
+  }, [listo, capas, categoriasActivas, seleccionadoId]);
 
   // Punto de "Mi ubicacion".
   useEffect(() => {

@@ -1,6 +1,7 @@
 import { House, Layers, LocateFixed, type LucideIcon } from 'lucide-react-native';
 import { useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getErrorMessage } from '@/api';
 import { MAPA_CONFIG } from '@/constants';
@@ -19,22 +20,33 @@ import { CAPAS_VACIAS, type MapaVistaRef } from './tipos';
 const ZOOM_MI_UBICACION = 16;
 
 /**
+ * Hueco a la derecha del panel de capas para el boton flotante del menu
+ * (56 de ancho, a 16 del borde), que se pinta encima de todas las pantallas.
+ */
+const ESPACIO_BOTON_MENU = 80;
+
+/**
  * Mapa general del municipio (Plan Maestro, 9).
  *
  * El mapa base se pinta enseguida, en el centro y zoom de `MAPA_CONFIG`; las
  * capas llegan despues y no mueven la camara. Si el API falla, el mapa sigue
  * siendo util como mapa del municipio y se avisa arriba.
+ *
+ * Al pie va el panel de capas, sobrepuesto y plegable. Al tocar una figura su
+ * ficha ocupa ese lugar; al cerrarla vuelve el panel.
  */
 export function PantallaMapa() {
+  const insets = useSafeAreaInsets();
   const { data, isFetching, error, refetch } = useCapasMapa();
   const capas = data ?? CAPAS_VACIAS;
 
   const cambios = useMapaStore((state) => state.cambios);
   const alternar = useMapaStore((state) => state.alternar);
-  const restablecer = useMapaStore((state) => state.restablecer);
+  const mostrarVarias = useMapaStore((state) => state.mostrarVarias);
+  const panelExpandido = useMapaStore((state) => state.panelExpandido);
+  const setPanelExpandido = useMapaStore((state) => state.setPanelExpandido);
 
   const [seleccionadoId, setSeleccionadoId] = useState<string | null>(null);
-  const [filtrosAbiertos, setFiltrosAbiertos] = useState(false);
   const vista = useRef<MapaVistaRef>(null);
   const { ubicacion, buscando, error: errorUbicacion, ubicar } = useMiUbicacion();
 
@@ -59,6 +71,16 @@ export function PantallaMapa() {
     if (coordenadas) vista.current?.irA(coordenadas, ZOOM_MI_UBICACION);
   };
 
+  /** El boton de capas: cierra la ficha si la hay y despliega o pliega el panel. */
+  const alternarPanel = () => {
+    if (seleccionadoId) {
+      setSeleccionadoId(null);
+      setPanelExpandido(true);
+    } else {
+      setPanelExpandido(!panelExpandido);
+    }
+  };
+
   const aviso = error
     ? `No se pudieron cargar las capas: ${getErrorMessage(error)}`
     : errorUbicacion;
@@ -70,19 +92,12 @@ export function PantallaMapa() {
         capas={capas}
         categoriasActivas={activas}
         seleccionadoId={seleccionadoId}
-        onSeleccionar={(id) => {
-          setSeleccionadoId(id);
-          if (id) setFiltrosAbiertos(false);
-        }}
+        onSeleccionar={setSeleccionadoId}
         miUbicacion={ubicacion}
       />
 
       <View className="absolute right-3 top-3 gap-2">
-        <BotonControl
-          icono={Layers}
-          etiqueta="Capas del mapa"
-          onPress={() => setFiltrosAbiertos((abierto) => !abierto)}
-        />
+        <BotonControl icono={Layers} etiqueta="Capas del mapa" onPress={alternarPanel} />
         <BotonControl
           icono={LocateFixed}
           etiqueta="Mi ubicación"
@@ -99,7 +114,7 @@ export function PantallaMapa() {
         </View>
       )}
 
-      {aviso && !filtrosAbiertos && (
+      {aviso && (
         <Pressable
           onPress={error ? () => void refetch() : undefined}
           className="absolute left-3 right-16 top-3 rounded-field bg-warning-50 px-3 py-2 shadow"
@@ -111,23 +126,31 @@ export function PantallaMapa() {
         </Pressable>
       )}
 
-      {filtrosAbiertos && (
-        <FiltrosCapas
-          categorias={capas.categorias}
-          activas={conjuntoActivas}
-          onAlternar={alternar}
-          onRestablecer={restablecer}
-          onCerrar={() => setFiltrosAbiertos(false)}
-        />
-      )}
-
-      {seleccionadoId && (
+      {seleccionadoId ? (
         <FichaElemento
           key={seleccionadoId}
           id={seleccionadoId}
           onCerrar={() => setSeleccionadoId(null)}
           onEncuadrar={(caja) => vista.current?.encuadrar(caja)}
         />
+      ) : (
+        <View
+          style={{
+            left: insets.left + 12,
+            right: insets.right + ESPACIO_BOTON_MENU,
+            bottom: insets.bottom + 12,
+          }}
+          className="absolute"
+        >
+          <FiltrosCapas
+            categorias={capas.categorias}
+            activas={conjuntoActivas}
+            expandido={panelExpandido}
+            onAlternarExpandido={() => setPanelExpandido(!panelExpandido)}
+            onAlternar={alternar}
+            onMostrarVarias={mostrarVarias}
+          />
+        </View>
       )}
     </View>
   );

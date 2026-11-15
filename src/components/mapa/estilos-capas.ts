@@ -61,14 +61,14 @@ function filtroSeleccion(id: string | null): FilterSpecification {
 /**
  * Capas de los elementos, de abajo arriba.
  *
- * @param conPuntos en web los puntos son un circulo de color; en el telefono
- *                  son marcadores con el icono de su capa (`Marker`), que no
- *                  van en la fuente.
+ * Los puntos se dibujan como marcadores con el icono de su capa (`Marker` en
+ * el telefono, un elemento del DOM en web), que van fuera de la fuente. Aqui
+ * solo llevan una zona de toque invisible: si el toque no lo recoge el
+ * marcador, lo recoge la capa, y la ficha se abre igual.
  */
 export function capasDeElementos(
   activas: string[],
   seleccionadoId: string | null,
-  conPuntos: boolean,
 ): LayerSpecification[] {
   const capas: LayerSpecification[] = [
     {
@@ -121,20 +121,20 @@ export function capasDeElementos(
     },
   ];
 
-  if (conPuntos) {
-    capas.push({
-      id: CAPA.punto,
-      type: 'circle',
-      source: FUENTE_ELEMENTOS,
-      filter: filtroDe('PUNTO', activas),
-      paint: {
-        'circle-radius': 9,
-        'circle-color': ['get', 'color'],
-        'circle-stroke-color': '#FFFFFF',
-        'circle-stroke-width': 2,
-      },
-    });
-  }
+  // Zona de toque de los puntos: del tamano del marcador, transparente. El
+  // marcador se ancla abajo, asi que el circulo se sube a su altura.
+  capas.push({
+    id: CAPA.punto,
+    type: 'circle',
+    source: FUENTE_ELEMENTOS,
+    filter: filtroDe('PUNTO', activas),
+    paint: {
+      'circle-radius': 20,
+      'circle-translate': [0, -20],
+      'circle-color': '#000000',
+      'circle-opacity': 0,
+    },
+  });
 
   return capas;
 }
