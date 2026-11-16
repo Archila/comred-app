@@ -27,10 +27,22 @@ const POR_PAGINA = 10;
 const MAX_SALTOS = 5;
 
 /** Tarjetas de la pantalla de categorias de una seccion. */
-export function useCategoriasContenido(seccion: SeccionContenido) {
+export function useCategoriasContenido(seccion: SeccionContenido, enabled = true) {
   return useQuery({
     queryKey: QUERY_KEYS.contenido.categorias(seccion),
     queryFn: () => contenidoActions.categorias(seccion),
+    enabled,
+  });
+}
+
+/** Cuantas publicaciones muestra el inicio. */
+export const PUBLICACIONES_INICIO = 5;
+
+/** Las ultimas publicaciones marcadas para la pagina principal. */
+export function usePublicacionesPrincipales(limit = PUBLICACIONES_INICIO) {
+  return useQuery({
+    queryKey: QUERY_KEYS.contenido.paginaPrincipal(limit),
+    queryFn: () => contenidoActions.paginaPrincipal(limit),
   });
 }
 

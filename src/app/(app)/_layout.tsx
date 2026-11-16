@@ -6,7 +6,12 @@ import { View } from 'react-native';
 import { AppHeader, BotonMenu, MenuLateral } from '@/components';
 import { buscarSeccion } from '@/constants';
 import { useCapacidadesEnvio } from '@/hooks';
-import { useIsAuthenticated, useMensajeAbierto, usePushStore } from '@/store';
+import {
+  useIsAuthenticated,
+  useMensajeAbierto,
+  usePuedeCrearContenido,
+  usePushStore,
+} from '@/store';
 
 /**
  * Pantallas de la app. Se montan siempre, con o sin sesion (modo publico):
@@ -28,6 +33,7 @@ export default function AppLayout() {
   // y tambien quien solo puede consultar lo enviado (rol "Consulta").
   const { data: capacidades } = useCapacidadesEnvio();
   const isAuthenticated = useIsAuthenticated();
+  const puedeCrearContenido = usePuedeCrearContenido();
   const veMensajes =
     isAuthenticated && Boolean(capacidades?.puedeEnviar || capacidades?.puedeVerHistorial);
 
@@ -73,6 +79,14 @@ export default function AppLayout() {
         {/* Al cerrar sesion estando aqui, la ruta desaparece y se vuelve al inicio. */}
         <Tabs.Protected guard={isAuthenticated}>
           <Tabs.Screen name="perfil" options={{ title: 'Mi perfil' }} />
+        </Tabs.Protected>
+        {/*
+          Nueva publicacion de la pagina principal, solo para administradores.
+          La barra con el titulo trae la flecha de vuelta al inicio. Las de
+          cada seccion van en el Stack de la seccion (`SeccionStack`).
+        */}
+        <Tabs.Protected guard={puedeCrearContenido}>
+          <Tabs.Screen name="publicar" options={{ title: 'Nueva publicación' }} />
         </Tabs.Protected>
         <Tabs.Screen
           name="seccion/[slug]"

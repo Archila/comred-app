@@ -48,6 +48,19 @@ export const contenidoActions = {
     return paginado(response.data ?? [], response.metadata, params);
   },
 
+  /**
+   * `GET /comred/contenido/publico/pagina-principal`
+   *
+   * Lo mas reciente primero, sin mirar la prioridad: el inicio es "lo ultimo
+   * que paso". Mismas reglas de visibilidad que el resto del contenido.
+   */
+  async paginaPrincipal(limit: number): Promise<Publicacion[]> {
+    const response = await api.get<Publicacion[]>(ENDPOINTS.contenido.paginaPrincipal, {
+      params: { limit },
+    });
+    return response.data ?? [];
+  },
+
   /** `GET /comred/contenido/publico/publicaciones/:id` */
   async publicacion(id: string): Promise<Publicacion> {
     const response = await api.get<Publicacion>(ENDPOINTS.contenido.publicacionById(id));

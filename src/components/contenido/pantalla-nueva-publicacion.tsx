@@ -1,46 +1,52 @@
-import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import {
   ArrowDown,
-  ChevronLeft,
-  ChevronRight,
-  CloudUpload,
+  Building,
+  CalendarClock,
+  CalendarX,
+  CircleCheck,
+  Clock,
   Eye,
-  ImagePlus,
+  EyeOff,
+  FileClock,
+  Flag,
+  Globe,
+  House,
   Images,
   LayoutGrid,
+  Link2,
   Lock,
+  MapPin,
   Send,
   TextAlignStart,
   Trash,
-  TriangleAlert,
   Type,
-  X,
+  UsersRound,
   type LucideIcon,
 } from 'lucide-react-native';
-import { useRef, useState, type ReactNode } from 'react';
-import {
-  FlatList,
-  Pressable,
-  View,
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
-} from 'react-native';
+import { useState } from 'react';
+import { View } from 'react-native';
 
 import { PRESENTACION_SECCION, type SeccionConVisor } from '@/constants';
-import { useCategoriasContenido, useCrearPublicacion, type BorradorPublicacion } from '@/hooks';
 import {
-  CALIDAD_IMAGEN,
+  useCategoriasContenido,
+  useCrearPublicacion,
+  useIncidentesPublicos,
+  useJornadasPublicas,
+  useProyectosPublicos,
+  type BorradorPublicacion,
+  type MomentoPublicacion,
+} from '@/hooks';
+import {
   MAX_IMAGENES_PUBLICACION,
   MAX_MB_IMAGEN,
-  cn,
   comprimirImagen,
   elegirImagenes,
   formatNumber,
   motivoDeRechazo,
 } from '@/lib';
-import type { CategoriaContenido, ImagenComprimida } from '@/models';
-import { usePuedeCrearContenido } from '@/store';
+import type { CategoriaContenido, ImagenComprimida, VisibilidadPublicacion } from '@/models';
+import { useCategoriasPublicas, usePuedeCrearContenido } from '@/store';
 
 import { EmptyState } from '../feedback/empty-state';
 import { ErrorState } from '../feedback/error-state';
@@ -50,45 +56,152 @@ import { Button } from '../ui/button';
 import { Card } from '../ui/card';
 import { Icon } from '../ui/icon';
 import { Input } from '../ui/input';
+import { SelectorFecha } from '../ui/selector-fecha';
 import { Text } from '../ui/text';
+import {
+  Campo,
+  Chip,
+  Interruptor,
+  MensajeError,
+  MensajeExito,
+  Miniaturas,
+  OpcionRadio,
+  TituloBloque,
+  ZonaSeleccion,
+} from './piezas-formulario';
+import { TarjetaPublicacion } from './tarjeta-publicacion';
 
 /**
  * Nueva publicacion desde el telefono, para administradores.
  *
- * Arriba se redacta (tarjeta, titulo, descripcion y fotos) y abajo se ve como
- * quedara en el visor, mientras se escribe: no hay un paso de confirmacion
- * aparte porque la vista previa ya lo es. Al publicar se vuelve al visor de
- * la tarjeta elegida, donde aparece la publicacion recien creada.
+ * Sirve para la pagina principal (`GENERAL`) y para cada seccion con visor.
+ * Pide todo lo que admite `CreatePublicacionDto`, en tres bloques:
+ *   1. Contenido: tarjeta, vinculo (incidente / jornada / proyecto), titulo,
+ *      descripcion e imagenes. Es lo que se ve.
+ *   2. Detalles: dependencia y comunidad. Opcionales.
+ *   3. Opciones: pagina principal, cuando sale, cuando se retira, prioridad
+ *      y quien la ve.
+ * Debajo, la vista previa se actualiza mientras se escribe: no hay paso de
+ * confirmacion aparte porque la vista previa ya lo es.
  *
  * Las fotos se comprimen al elegirlas (`comprimirImagen`), no al publicar:
  * asi la espera se reparte y la vista previa ya muestra lo que se subira.
  */
 
+/** La pagina principal o una seccion con tarjetas. */
+export type DestinoPublicacion = SeccionConVisor | 'GENERAL';
+
 /* -------------------------------------------------------------------------- */
 /* Reglas del formulario                                                       */
 /* -------------------------------------------------------------------------- */
 
-// `CreatePublicacionDto` admite 5000 caracteres de descripcion; aqui se pide
-// algo que se lea de un vistazo en el visor. El resto, en el panel.
+// Los mismos limites que `CreatePublicacionDto`, salvo la descripcion: el API
+// admite 5000, aqui se pide algo que se lea de un vistazo. El resto, en el panel.
 const TITULO = { min: 3, max: 150 };
 const DESCRIPCION = { min: 3, max: 1000 };
+const TEXTO_CORTO = 150;
 
-type CampoFormulario = 'categoriaContenidoId' | 'titulo' | 'descripcion' | 'imagenes';
+const PRIORIDADES: { valor: number; etiqueta: string; descripcion: string; icono: LucideIcon }[] = [
+  { valor: 0, etiqueta: 'Normal', descripcion: 'Por orden de fecha, con las demás.', icono: Clock },
+  { valor: 50, etiqueta: 'Alta', descripcion: 'Antes que las normales en su sección.', icono: Flag },
+  {
+    valor: 100,
+    etiqueta: 'Urgente',
+    descripcion: 'La primera de su sección. Solo para emergencias activas.',
+    icono: FileClock,
+  },
+];
+
+const MOMENTOS: { valor: MomentoPublicacion; etiqueta: string; descripcion: string; icono: LucideIcon }[] = [
+  { valor: 'ahora', etiqueta: 'Publicar ahora', descripcion: 'Se ve en cuanto la publiques.', icono: Send },
+  {
+    valor: 'programada',
+    etiqueta: 'Programar',
+    descripcion: 'Aparece sola en la fecha y hora que elijas.',
+    icono: CalendarClock,
+  },
+  {
+    valor: 'borrador',
+    etiqueta: 'Guardar como borrador',
+    descripcion: 'No se ve en la app. Se termina y publica desde el panel.',
+    icono: FileClock,
+  },
+];
+
+const VISIBILIDADES: {
+  valor: VisibilidadPublicacion;
+  etiqueta: string;
+  descripcion: string;
+  icono: LucideIcon;
+}[] = [
+  { valor: 'PUBLICA', etiqueta: 'Pública', descripcion: 'La ve cualquier persona con la app.', icono: Globe },
+  {
+    valor: 'GRUPO',
+    etiqueta: 'Solo un grupo',
+    descripcion: 'Solo los miembros con sesión de una brigada, COCODE o categoría.',
+    icono: UsersRound,
+  },
+  {
+    valor: 'ADMINISTRATIVA',
+    etiqueta: 'Interna',
+    descripcion: 'No sale en la app: solo se consulta desde el panel.',
+    icono: EyeOff,
+  },
+];
+
+type CampoFormulario =
+  | 'categoriaContenidoId'
+  | 'titulo'
+  | 'descripcion'
+  | 'dependencia'
+  | 'comunidad'
+  | 'imagenes'
+  | 'fechaPublicacion'
+  | 'fechaExpiracion'
+  | 'grupo';
 type Errores = Partial<Record<CampoFormulario, string>>;
 
-function validar(borrador: BorradorPublicacion): Errores {
+function validar(borrador: BorradorPublicacion, conTarjeta: boolean): Errores {
   const errores: Errores = {};
   const titulo = borrador.titulo.trim().length;
   const descripcion = borrador.descripcion.trim().length;
+  const ahora = new Date();
 
-  if (!borrador.categoriaContenidoId) errores.categoriaContenidoId = 'Elige dónde se publicará.';
+  if (conTarjeta && !borrador.categoriaContenidoId) {
+    errores.categoriaContenidoId = 'Elige dónde se publicará.';
+  }
   if (titulo < TITULO.min || titulo > TITULO.max) {
     errores.titulo = `El título debe tener entre ${TITULO.min} y ${TITULO.max} caracteres.`;
   }
   if (descripcion < DESCRIPCION.min || descripcion > DESCRIPCION.max) {
     errores.descripcion = `La descripción debe tener entre ${DESCRIPCION.min} y ${formatNumber(DESCRIPCION.max)} caracteres.`;
   }
+  if (borrador.dependencia.trim().length > TEXTO_CORTO) {
+    errores.dependencia = `Máximo ${TEXTO_CORTO} caracteres.`;
+  }
+  if (borrador.comunidad.trim().length > TEXTO_CORTO) {
+    errores.comunidad = `Máximo ${TEXTO_CORTO} caracteres.`;
+  }
   if (borrador.imagenes.length === 0) errores.imagenes = 'Agrega al menos una imagen.';
+
+  if (borrador.momento === 'programada') {
+    if (!borrador.fechaPublicacion) errores.fechaPublicacion = 'Elige cuándo se publicará.';
+    else if (borrador.fechaPublicacion <= ahora) {
+      errores.fechaPublicacion = 'La fecha ya pasó. Elige una futura o publica ahora.';
+    }
+  }
+
+  if (borrador.fechaExpiracion) {
+    const inicio =
+      borrador.momento === 'programada' && borrador.fechaPublicacion ? borrador.fechaPublicacion : ahora;
+    if (borrador.fechaExpiracion <= inicio) {
+      errores.fechaExpiracion = 'Debe ser posterior a la publicación; si no, nunca se vería.';
+    }
+  }
+
+  if (borrador.visibilidad === 'GRUPO' && !borrador.grupo) {
+    errores.grupo = 'Elige qué grupo la verá.';
+  }
 
   return errores;
 }
@@ -97,12 +210,14 @@ function validar(borrador: BorradorPublicacion): Errores {
 /* Pantalla                                                                    */
 /* -------------------------------------------------------------------------- */
 
-export function PantallaNuevaPublicacion({ seccion }: { seccion: SeccionConVisor }) {
+export function PantallaNuevaPublicacion({ seccion }: { seccion: DestinoPublicacion }) {
   const puedeCrear = usePuedeCrearContenido();
-  const categorias = useCategoriasContenido(seccion);
+  const esInicio = seccion === 'GENERAL';
+  // La pagina principal no tiene tarjetas: no se piden.
+  const categorias = useCategoriasContenido(seccion, !esInicio && puedeCrear);
 
-  // La ruta ya va en `Stack.Protected`; esto cubre el instante en que la
-  // sesion cambia con la pantalla abierta.
+  // La ruta ya va protegida; esto cubre el instante en que la sesion cambia
+  // con la pantalla abierta.
   if (!puedeCrear) {
     return (
       <Screen edges={['bottom']}>
@@ -114,6 +229,8 @@ export function PantallaNuevaPublicacion({ seccion }: { seccion: SeccionConVisor
       </Screen>
     );
   }
+
+  if (esInicio) return <Formulario seccion={seccion} categorias={[]} />;
 
   if (categorias.isPending) return <LoadingScreen message="Cargando..." />;
   if (categorias.isError) {
@@ -135,31 +252,53 @@ export function PantallaNuevaPublicacion({ seccion }: { seccion: SeccionConVisor
 }
 
 function borradorVacio(
-  seccion: SeccionConVisor,
+  seccion: DestinoPublicacion,
   categorias: CategoriaContenido[],
   sugerida?: string,
 ): BorradorPublicacion {
   // Desde el visor llega la tarjeta que se estaba viendo; si solo hay una,
   // preguntarla no aporta nada.
-  const inicial = categorias.find((c) => c.id === sugerida)?.id ?? (categorias.length === 1 ? categorias[0].id : '');
-  return { seccion, categoriaContenidoId: inicial, titulo: '', descripcion: '', imagenes: [] };
+  const tarjeta =
+    categorias.find((c) => c.id === sugerida)?.id ?? (categorias.length === 1 ? categorias[0].id : '');
+
+  return {
+    seccion,
+    categoriaContenidoId: tarjeta,
+    entidadId: '',
+    titulo: '',
+    descripcion: '',
+    dependencia: '',
+    comunidad: '',
+    visibilidad: 'PUBLICA',
+    grupo: null,
+    momento: 'ahora',
+    fechaPublicacion: null,
+    fechaExpiracion: null,
+    prioridad: 0,
+    // Lo que se crea desde el inicio es del inicio.
+    paginaPrincipal: seccion === 'GENERAL',
+    imagenes: [],
+  };
 }
 
 function Formulario({
   seccion,
   categorias,
 }: {
-  seccion: SeccionConVisor;
+  seccion: DestinoPublicacion;
   categorias: CategoriaContenido[];
 }) {
   const router = useRouter();
-  const presentacion = PRESENTACION_SECCION[seccion];
   const { categoriaId } = useLocalSearchParams<{ categoriaId?: string }>();
+  const esInicio = seccion === 'GENERAL';
+  const presentacion = esInicio ? null : PRESENTACION_SECCION[seccion];
+  const nombreDestino = presentacion?.titulo ?? 'la página principal';
 
   const [borrador, setBorrador] = useState(() => borradorVacio(seccion, categorias, categoriaId));
   const [errores, setErrores] = useState<Errores>({});
   const [procesando, setProcesando] = useState(false);
   const [avisoImagenes, setAvisoImagenes] = useState<string | null>(null);
+  const [borradorGuardado, setBorradorGuardado] = useState(false);
 
   const crear = useCrearPublicacion();
   const ocupado = procesando || crear.isPending;
@@ -167,6 +306,7 @@ function Formulario({
 
   function actualizar(cambios: Partial<BorradorPublicacion>) {
     setBorrador((actual) => ({ ...actual, ...cambios }));
+    setBorradorGuardado(false);
     // El error de un campo desaparece en cuanto se toca.
     setErrores((actuales) => {
       const siguientes = { ...actuales };
@@ -218,10 +358,6 @@ function Formulario({
     }
   }
 
-  function quitarImagen(id: string) {
-    actualizar({ imagenes: borrador.imagenes.filter((imagen) => imagen.id !== id) });
-  }
-
   function limpiar() {
     crear.reset();
     setErrores({});
@@ -234,16 +370,25 @@ function Formulario({
     // antes de que React vuelva a pintar. Dos toques serian dos publicaciones.
     if (crear.isPending) return;
 
-    const encontrados = validar(borrador);
+    const encontrados = validar(borrador, !esInicio);
     setErrores(encontrados);
     if (Object.keys(encontrados).length > 0) return;
 
     crear.mutate(borrador, {
-      // Al visor de la tarjeta: si ya estaba debajo, se vuelve a el en vez de
-      // apilar otro; volver atras no debe dejar el formulario listo para
-      // publicarlo otra vez.
-      onSuccess: () =>
-        router.dismissTo(`/${presentacion.slug}/${borrador.categoriaContenidoId}` as Href),
+      onSuccess: () => {
+        // Un borrador no se ve en la app: se confirma aqui y se deja el
+        // formulario limpio para el siguiente.
+        if (borrador.momento === 'borrador') {
+          limpiar();
+          setBorradorGuardado(true);
+          return;
+        }
+        // Al sitio donde aparece. `dismissTo` vuelve al visor si ya estaba
+        // debajo en vez de apilar otro: volver atras no debe dejar el
+        // formulario listo para publicarlo otra vez.
+        if (esInicio || !presentacion) router.navigate('/');
+        else router.dismissTo(`/${presentacion.slug}/${borrador.categoriaContenidoId}` as Href);
+      },
     });
   }
 
@@ -251,39 +396,67 @@ function Formulario({
     crear.fase === 'subiendo'
       ? 'Subiendo imágenes...'
       : crear.fase === 'publicando'
-        ? 'Publicando...'
-        : `Publicar en ${presentacion.titulo}`;
+        ? 'Guardando...'
+        : borrador.momento === 'borrador'
+          ? 'Guardar borrador'
+          : borrador.momento === 'programada'
+            ? 'Programar publicación'
+            : `Publicar en ${esInicio ? 'página principal' : nombreDestino}`;
+
+  const enInicio = esInicio || borrador.paginaPrincipal;
+  const ubicacionPrevia = enInicio
+    ? 'la página principal'
+    : [nombreDestino, tarjeta?.nombre].filter(Boolean).join(' › ');
 
   return (
     <Screen scrollable avoidKeyboard edges={['bottom']} contentClassName="gap-5 pb-28">
       <View className="gap-1">
         <Text variant="title" className="text-2xl">
-          Publicar en {presentacion.titulo}
+          {esInicio ? 'Publicaciones en página principal' : `Publicar en ${nombreDestino}`}
         </Text>
-        <Text variant="subtitle">Crea una nueva publicación para esta sección.</Text>
+        <Text variant="subtitle">
+          {esInicio
+            ? 'Crea una nueva publicación para la página principal.'
+            : 'Crea una nueva publicación para esta sección.'}
+        </Text>
       </View>
 
+      {/* 1. Contenido ----------------------------------------------------- */}
       <Card className="gap-6">
-        <Campo
-          icono={LayoutGrid}
-          titulo="Categoría"
-          ayuda="La tarjeta bajo la que aparecerá la publicación."
-          error={errores.categoriaContenidoId}
-        >
-          <View className="flex-row flex-wrap gap-2">
-            {categorias.map((categoria) => (
-              <Chip
-                key={categoria.id}
-                etiqueta={categoria.nombre}
-                seleccionado={borrador.categoriaContenidoId === categoria.id}
-                deshabilitado={crear.isPending}
-                onPress={() => actualizar({ categoriaContenidoId: categoria.id })}
-              />
-            ))}
-          </View>
-        </Campo>
+        {!esInicio && (
+          <Campo
+            icono={LayoutGrid}
+            titulo="Categoría"
+            requerido
+            ayuda="La tarjeta bajo la que aparecerá la publicación."
+            error={errores.categoriaContenidoId}
+          >
+            <View className="flex-row flex-wrap gap-2">
+              {categorias.map((categoria) => (
+                <Chip
+                  key={categoria.id}
+                  etiqueta={categoria.nombre}
+                  seleccionado={borrador.categoriaContenidoId === categoria.id}
+                  deshabilitado={crear.isPending}
+                  // Los incidentes de otra tarjeta no sirven en esta.
+                  onPress={() => actualizar({ categoriaContenidoId: categoria.id, entidadId: '' })}
+                />
+              ))}
+            </View>
+          </Campo>
+        )}
 
-        <Campo icono={Type} titulo="Texto en letras grandes (Título)">
+        {!esInicio && borrador.categoriaContenidoId && (
+          <SelectorEntidad
+            seccion={seccion}
+            categoriaId={borrador.categoriaContenidoId}
+            seleccionada={borrador.entidadId}
+            deshabilitado={crear.isPending}
+            onCambiar={(entidadId) => actualizar({ entidadId })}
+          />
+        )}
+
+        <Campo icono={Type} titulo="Texto en letras grandes (Título)" requerido>
           <Input
             placeholder="Escribe el título de la publicación..."
             maxLength={TITULO.max}
@@ -295,7 +468,7 @@ function Formulario({
           />
         </Campo>
 
-        <Campo icono={TextAlignStart} titulo="Texto en letras pequeñas (Descripción)">
+        <Campo icono={TextAlignStart} titulo="Texto en letras pequeñas (Descripción)" requerido>
           <Input
             placeholder="Escribe la descripción o información detallada..."
             multiline
@@ -311,6 +484,7 @@ function Formulario({
         <Campo
           icono={Images}
           titulo="Imágenes"
+          requerido
           ayuda={`Puedes subir varias imágenes (máx. ${MAX_IMAGENES_PUBLICACION}). Formatos: JPG, JPEG, PNG (máx. ${MAX_MB_IMAGEN} MB por imagen). La primera es la portada.`}
           error={errores.imagenes}
         >
@@ -325,12 +499,143 @@ function Formulario({
             <Miniaturas
               imagenes={borrador.imagenes}
               deshabilitado={crear.isPending}
-              onQuitar={quitarImagen}
+              onQuitar={(id) => actualizar({ imagenes: borrador.imagenes.filter((i) => i.id !== id) })}
             />
           )}
         </Campo>
       </Card>
 
+      {/* 2. Detalles ------------------------------------------------------ */}
+      <Card className="gap-6">
+        <TituloBloque titulo="Detalles" descripcion="Opcionales. Ayudan a ubicar la publicación." />
+
+        <Campo icono={Building} titulo="Dependencia" ayuda="Quién emite la publicación.">
+          <Input
+            placeholder="Ej: COMRED, Dirección Municipal de Planificación"
+            maxLength={TEXTO_CORTO}
+            value={borrador.dependencia}
+            onChangeText={(dependencia) => actualizar({ dependencia })}
+            error={errores.dependencia}
+            editable={!crear.isPending}
+          />
+        </Campo>
+
+        <Campo icono={MapPin} titulo="Comunidad" ayuda="Lugar o comunidad a la que se refiere.">
+          <Input
+            placeholder="Ej: Aldea Las Majadas"
+            maxLength={TEXTO_CORTO}
+            value={borrador.comunidad}
+            onChangeText={(comunidad) => actualizar({ comunidad })}
+            error={errores.comunidad}
+            editable={!crear.isPending}
+          />
+        </Campo>
+      </Card>
+
+      {/* 3. Opciones de publicacion -------------------------------------- */}
+      <Card className="gap-6">
+        <TituloBloque titulo="Opciones de publicación" />
+
+        {esInicio ? (
+          <View className="flex-row items-center gap-3 rounded-field border border-line bg-surface p-3 dark:border-line-dark dark:bg-surface-dark">
+            <Icon as={House} size={22} className="text-primary-500 dark:text-primary-500" />
+            <Text variant="caption" className="flex-1">
+              Se mostrará en la página principal. El inicio enseña las 5 más recientes.
+            </Text>
+          </View>
+        ) : (
+          <Interruptor
+            icono={House}
+            etiqueta="Mostrar en la página principal"
+            descripcion="Además de en su sección, sale en el inicio (las 5 más recientes)."
+            activo={borrador.paginaPrincipal}
+            deshabilitado={crear.isPending}
+            onCambiar={(paginaPrincipal) => actualizar({ paginaPrincipal })}
+          />
+        )}
+
+        <Campo icono={CalendarClock} titulo="¿Cuándo se publica?" error={errores.fechaPublicacion}>
+          <View className="gap-2">
+            {MOMENTOS.map((momento) => (
+              <OpcionRadio
+                key={momento.valor}
+                icono={momento.icono}
+                etiqueta={momento.etiqueta}
+                descripcion={momento.descripcion}
+                seleccionada={borrador.momento === momento.valor}
+                deshabilitado={crear.isPending}
+                onPress={() =>
+                  actualizar({
+                    momento: momento.valor,
+                    // Volver a "ahora" descarta la fecha: no debe colarse.
+                    fechaPublicacion: momento.valor === 'programada' ? borrador.fechaPublicacion : null,
+                  })
+                }
+              />
+            ))}
+          </View>
+          {borrador.momento === 'programada' && (
+            <SelectorFecha
+              valor={borrador.fechaPublicacion}
+              minimo={new Date()}
+              placeholder="Elige fecha y hora de publicación"
+              deshabilitado={crear.isPending}
+              onCambiar={(fechaPublicacion) => actualizar({ fechaPublicacion })}
+            />
+          )}
+        </Campo>
+
+        <Campo icono={CalendarX} titulo="Vencimiento" error={errores.fechaExpiracion}>
+          <Interruptor
+            etiqueta="Retirar automáticamente"
+            descripcion="Deja de verse sola en una fecha. Útil para convocatorias y avisos de temporada."
+            activo={borrador.fechaExpiracion !== null}
+            deshabilitado={crear.isPending}
+            onCambiar={(activo) =>
+              actualizar({
+                fechaExpiracion: activo
+                  ? sumarDias(borrador.momento === 'programada' ? borrador.fechaPublicacion : null, 7)
+                  : null,
+              })
+            }
+          />
+          {borrador.fechaExpiracion && (
+            <SelectorFecha
+              valor={borrador.fechaExpiracion}
+              minimo={(borrador.momento === 'programada' && borrador.fechaPublicacion) || new Date()}
+              placeholder="Elige hasta cuándo se verá"
+              deshabilitado={crear.isPending}
+              onCambiar={(fechaExpiracion) => actualizar({ fechaExpiracion })}
+            />
+          )}
+        </Campo>
+
+        <Campo icono={Flag} titulo="Prioridad" ayuda="Ordena la publicación dentro de su sección.">
+          <View className="gap-2">
+            {PRIORIDADES.map((prioridad) => (
+              <OpcionRadio
+                key={prioridad.valor}
+                icono={prioridad.icono}
+                etiqueta={prioridad.etiqueta}
+                descripcion={prioridad.descripcion}
+                seleccionada={borrador.prioridad === prioridad.valor}
+                deshabilitado={crear.isPending}
+                onPress={() => actualizar({ prioridad: prioridad.valor })}
+              />
+            ))}
+          </View>
+        </Campo>
+
+        <SelectorVisibilidad
+          visibilidad={borrador.visibilidad}
+          grupo={borrador.grupo}
+          error={errores.grupo}
+          deshabilitado={crear.isPending}
+          onCambiar={(cambios) => actualizar(cambios)}
+        />
+      </Card>
+
+      {/* Vista previa ----------------------------------------------------- */}
       <View className="flex-row items-center gap-3 rounded-card border border-secondary-300 bg-secondary-500 px-4 py-3">
         <Icon as={ArrowDown} size={20} className="text-secondary-foreground dark:text-secondary-foreground" />
         <Text variant="plain" className="flex-1 text-base font-semibold text-secondary-foreground">
@@ -338,19 +643,36 @@ function Formulario({
         </Text>
       </View>
 
-      <VistaPrevia
-        titulo={borrador.titulo.trim()}
-        descripcion={borrador.descripcion.trim()}
-        imagenes={borrador.imagenes}
-        ubicacion={[presentacion.titulo, tarjeta?.nombre].filter(Boolean).join(' › ')}
-      />
+      <Card className="gap-4">
+        <View className="gap-0.5">
+          <View className="flex-row items-center gap-2">
+            <Icon as={Eye} size={22} />
+            <Text variant="heading">Vista previa de la publicación</Text>
+          </View>
+          <Text variant="caption">Así se verá en {ubicacionPrevia}.</Text>
+        </View>
+        <TarjetaPublicacion
+          imagenes={borrador.imagenes}
+          titulo={borrador.titulo.trim()}
+          descripcion={borrador.descripcion.trim()}
+          detalle={[borrador.dependencia.trim(), borrador.comunidad.trim()].filter(Boolean).join(' · ')}
+          placeholderTitulo="Título de la publicación"
+          placeholderDescripcion="Aquí se mostrará la descripción de la publicación con la información detallada para la población."
+        />
+      </Card>
 
       {crear.errorMessage && <MensajeError texto={crear.errorMessage} />}
+      {borradorGuardado && (
+        <MensajeExito
+          icono={CircleCheck}
+          texto="Borrador guardado. No se verá en la app hasta que lo publiques desde el panel."
+        />
+      )}
 
       <View className="gap-3">
         <Button
           label={etiquetaPublicar}
-          icon={Send}
+          icon={borrador.momento === 'borrador' ? FileClock : Send}
           size="lg"
           fullWidth
           loading={crear.isPending}
@@ -371,351 +693,171 @@ function Formulario({
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/* Piezas del formulario                                                       */
-/* -------------------------------------------------------------------------- */
-
-function Campo({
-  icono,
-  titulo,
-  ayuda,
-  error,
-  children,
-}: {
-  icono: LucideIcon;
-  titulo: string;
-  ayuda?: string;
-  error?: string;
-  children: ReactNode;
-}) {
-  return (
-    <View className="gap-3">
-      <View className="flex-row gap-3">
-        <Icon as={icono} size={24} className="text-primary-500 dark:text-primary-500" />
-        <View className="flex-1 gap-0.5">
-          <Text variant="body" className="font-semibold">
-            {titulo} <Text variant="plain" className="text-primary-500">*</Text>
-          </Text>
-          {ayuda && <Text variant="caption">{ayuda}</Text>}
-        </View>
-      </View>
-      {children}
-      {error && <Text variant="error">{error}</Text>}
-    </View>
-  );
-}
-
-function Chip({
-  etiqueta,
-  seleccionado,
-  deshabilitado,
-  onPress,
-}: {
-  etiqueta: string;
-  seleccionado: boolean;
-  deshabilitado: boolean;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      accessibilityRole="radio"
-      accessibilityState={{ selected: seleccionado, disabled: deshabilitado }}
-      disabled={deshabilitado}
-      onPress={onPress}
-      className={cn(
-        'min-h-10 justify-center rounded-full border px-4 py-2',
-        seleccionado
-          ? 'border-primary-500 bg-primary-500'
-          : 'border-line-strong bg-surface active:bg-surface-sunken dark:border-line-dark-strong dark:bg-surface-dark dark:active:bg-surface-dark-sunken',
-      )}
-    >
-      <Text
-        variant="plain"
-        className={cn(
-          'text-sm font-semibold',
-          seleccionado ? 'text-primary-foreground' : 'text-content dark:text-content-dark-default',
-        )}
-      >
-        {etiqueta}
-      </Text>
-    </Pressable>
-  );
-}
-
-function ZonaSeleccion({
-  cantidad,
-  procesando,
-  deshabilitado,
-  onSeleccionar,
-}: {
-  cantidad: number;
-  procesando: boolean;
-  deshabilitado: boolean;
-  onSeleccionar: () => void;
-}) {
-  const llena = cantidad >= MAX_IMAGENES_PUBLICACION;
-
-  return (
-    <View className="items-center gap-3 rounded-card border-2 border-dashed border-line-strong bg-surface-sunken px-4 py-6 dark:border-line-dark-strong dark:bg-surface-dark-sunken">
-      <Icon as={CloudUpload} size={36} className="text-content-muted dark:text-content-dark-muted" />
-      <Text variant="body" className="text-center">
-        {llena ? 'Llegaste al máximo de imágenes' : 'Selecciona aquí tus imágenes desde la galería'}
-      </Text>
-      <Button
-        label={procesando ? 'Optimizando imágenes...' : 'Seleccionar imágenes'}
-        icon={ImagePlus}
-        loading={procesando}
-        disabled={llena || deshabilitado}
-        onPress={onSeleccionar}
-      />
-      <Text variant="caption" className="text-center">
-        {cantidad} de {MAX_IMAGENES_PUBLICACION} · Se optimizan al {Math.round(CALIDAD_IMAGEN * 100)} % de
-        calidad para que suban rápido
-      </Text>
-    </View>
-  );
-}
-
-const COLUMNAS = 3;
-const SEPARACION_MINIATURAS = 8;
-
-function Miniaturas({
-  imagenes,
-  deshabilitado,
-  onQuitar,
-}: {
-  imagenes: ImagenComprimida[];
-  deshabilitado: boolean;
-  onQuitar: (id: string) => void;
-}) {
-  const [ancho, setAncho] = useState(0);
-  const lado = Math.floor((ancho - SEPARACION_MINIATURAS * (COLUMNAS - 1)) / COLUMNAS);
-
-  return (
-    <View
-      className="flex-row flex-wrap"
-      style={{ gap: SEPARACION_MINIATURAS }}
-      onLayout={(evento) => setAncho(evento.nativeEvent.layout.width)}
-    >
-      {lado > 0 &&
-        imagenes.map((imagen, indice) => (
-          <View
-            key={imagen.id}
-            style={{ width: lado, height: lado }}
-            className="overflow-hidden rounded-field border border-line bg-surface-sunken dark:border-line-dark dark:bg-surface-dark-sunken"
-          >
-            <Image
-              source={{ uri: imagen.uri }}
-              style={{ width: '100%', height: '100%' }}
-              contentFit="cover"
-              transition={150}
-              accessibilityLabel={`Imagen ${indice + 1}`}
-            />
-            {indice === 0 && (
-              <View className="absolute bottom-1.5 left-1.5 rounded-full bg-primary-500 px-2 py-0.5">
-                <Text variant="plain" className="text-[10px] font-bold uppercase text-primary-foreground">
-                  Portada
-                </Text>
-              </View>
-            )}
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={`Quitar imagen ${indice + 1}`}
-              hitSlop={6}
-              disabled={deshabilitado}
-              onPress={() => onQuitar(imagen.id)}
-              className="absolute right-1.5 top-1.5 h-7 w-7 items-center justify-center rounded-full bg-black/60 active:opacity-70"
-            >
-              <Icon as={X} size={16} className="text-white dark:text-white" />
-            </Pressable>
-          </View>
-        ))}
-    </View>
-  );
+/** `dias` despues de `desde` (o de ahora), a la hora en punto siguiente. */
+function sumarDias(desde: Date | null, dias: number): Date {
+  const fecha = new Date(desde ?? new Date());
+  fecha.setDate(fecha.getDate() + dias);
+  fecha.setHours(fecha.getHours() + 1, 0, 0, 0);
+  return fecha;
 }
 
 /* -------------------------------------------------------------------------- */
-/* Vista previa                                                                */
+/* Vinculo con incidente, jornada o proyecto                                   */
 /* -------------------------------------------------------------------------- */
 
-function VistaPrevia({
-  titulo,
-  descripcion,
-  imagenes,
-  ubicacion,
-}: {
-  titulo: string;
-  descripcion: string;
-  imagenes: ImagenComprimida[];
-  ubicacion: string;
-}) {
-  return (
-    <Card className="gap-4">
-      <View className="gap-0.5">
-        <View className="flex-row items-center gap-2">
-          <Icon as={Eye} size={22} />
-          <Text variant="heading">Vista previa de la publicación</Text>
-        </View>
-        <Text variant="caption">Así se verá en {ubicacion}.</Text>
-      </View>
-
-      <CarruselPrevia imagenes={imagenes} />
-
-      <View className="gap-2">
-        <Text
-          variant="plain"
-          className={cn(
-            'text-2xl font-bold leading-8',
-            titulo ? 'text-content dark:text-content-dark-default' : 'text-content-subtle dark:text-content-dark-subtle',
-          )}
-        >
-          {titulo || 'Título de la publicación'}
-        </Text>
-        <Text
-          variant="plain"
-          className={cn(
-            'text-base leading-6',
-            descripcion
-              ? 'text-content-muted dark:text-content-dark-muted'
-              : 'text-content-subtle dark:text-content-dark-subtle',
-          )}
-        >
-          {descripcion ||
-            'Aquí se mostrará la descripción de la publicación con la información detallada para la población.'}
-        </Text>
-      </View>
-    </Card>
-  );
-}
+const ENTIDAD_DE_SECCION: Partial<
+  Record<SeccionConVisor, { titulo: string; ayuda: string; ninguna: string }>
+> = {
+  REPORTES: {
+    titulo: 'Incidente',
+    ayuda: 'Si la publicación cuenta un incidente concreto, vincúlala para seguirlo en el visor.',
+    ninguna: 'Ningún incidente',
+  },
+  JORNADAS: {
+    titulo: 'Jornada',
+    ayuda: 'Vincúlala a la jornada que anuncia: la app mostrará su fecha, lugar y requisitos.',
+    ninguna: 'Ninguna jornada',
+  },
+  PROYECTOS: {
+    titulo: 'Proyecto',
+    ayuda: 'Vincúlala al proyecto del que da seguimiento: la app mostrará su avance.',
+    ninguna: 'Ningún proyecto',
+  },
+};
 
 /**
- * Galeria de la vista previa. Como en el visor, la foto se ve entera sobre
- * una copia desenfocada: lo que se ve aqui es lo que vera la poblacion.
+ * Solo Reportes, Jornadas y Proyectos tienen entidad, y solo la de su seccion:
+ * lo exige el API (`PUB-06-01`). Se listan las de la tarjeta elegida, porque
+ * al vincular el API pone la tarjeta de la entidad.
  */
-function CarruselPrevia({ imagenes }: { imagenes: ImagenComprimida[] }) {
-  const lista = useRef<FlatList<ImagenComprimida>>(null);
-  const [ancho, setAncho] = useState(0);
-  const [actual, setActual] = useState(0);
-  const alto = Math.round(ancho * 0.62);
-  // Al quitar fotos el indice puede quedar fuera de la lista.
-  const indice = Math.min(actual, Math.max(imagenes.length - 1, 0));
+function SelectorEntidad({
+  seccion,
+  categoriaId,
+  seleccionada,
+  deshabilitado,
+  onCambiar,
+}: {
+  seccion: SeccionConVisor;
+  categoriaId: string;
+  seleccionada: string;
+  deshabilitado: boolean;
+  onCambiar: (entidadId: string) => void;
+}) {
+  const filtro = { categoriaContenidoId: categoriaId, limit: 50 };
+  // Las tres llamadas siempre (reglas de los hooks); solo una se ejecuta.
+  const incidentes = useIncidentesPublicos(filtro, seccion === 'REPORTES');
+  const jornadas = useJornadasPublicas(filtro, seccion === 'JORNADAS');
+  const proyectos = useProyectosPublicos(filtro, seccion === 'PROYECTOS');
 
-  function ir(destino: number) {
-    if (destino < 0 || destino >= imagenes.length) return;
-    lista.current?.scrollToIndex({ index: destino, animated: true });
-    setActual(destino);
-  }
+  const textos = ENTIDAD_DE_SECCION[seccion];
+  if (!textos) return null;
 
-  function alTerminarDeslizar(evento: NativeSyntheticEvent<NativeScrollEvent>) {
-    if (ancho > 0) setActual(Math.round(evento.nativeEvent.contentOffset.x / ancho));
-  }
+  const consulta = seccion === 'REPORTES' ? incidentes : seccion === 'JORNADAS' ? jornadas : proyectos;
+  const opciones = consulta.data?.items ?? [];
 
   return (
-    <View className="gap-3">
-      <View
-        className="overflow-hidden rounded-card bg-surface-sunken dark:bg-surface-dark-sunken"
-        style={{ height: alto || undefined }}
-        onLayout={(evento) => setAncho(evento.nativeEvent.layout.width)}
-      >
-        {imagenes.length === 0 ? (
-          <View className="flex-1 items-center justify-center gap-2 p-6" style={{ minHeight: 160 }}>
-            <Icon as={Images} size={36} className="text-content-subtle dark:text-content-dark-subtle" />
-            <Text variant="caption" className="text-center">
-              Aquí se verán tus imágenes
-            </Text>
-          </View>
-        ) : (
-          ancho > 0 && (
-            <FlatList
-              ref={lista}
-              data={imagenes}
-              keyExtractor={(imagen) => imagen.id}
-              horizontal
-              pagingEnabled
-              showsHorizontalScrollIndicator={false}
-              onMomentumScrollEnd={alTerminarDeslizar}
-              getItemLayout={(_, i) => ({ length: ancho, offset: ancho * i, index: i })}
-              renderItem={({ item }) => (
-                <View style={{ width: ancho, height: alto }} className="bg-black">
-                  <Image
-                    source={{ uri: item.uri }}
-                    style={{ position: 'absolute', width: ancho, height: alto, opacity: 0.55 }}
-                    contentFit="cover"
-                    blurRadius={24}
-                  />
-                  <Image source={{ uri: item.uri }} style={{ width: ancho, height: alto }} contentFit="contain" />
-                </View>
-              )}
-            />
-          )
-        )}
-
-        {imagenes.length > 1 && (
-          <>
-            <Flecha icono={ChevronLeft} lado="izquierda" visible={indice > 0} onPress={() => ir(indice - 1)} />
-            <Flecha
-              icono={ChevronRight}
-              lado="derecha"
-              visible={indice < imagenes.length - 1}
-              onPress={() => ir(indice + 1)}
-            />
-          </>
-        )}
-      </View>
-
-      {imagenes.length > 1 && (
-        <View className="flex-row justify-center gap-2">
-          {imagenes.map((imagen, i) => (
-            <View
-              key={imagen.id}
-              className={cn(
-                'h-2.5 w-2.5 rounded-full',
-                i === indice ? 'bg-primary-500' : 'bg-line-strong dark:bg-line-dark-strong',
-              )}
+    <Campo icono={Link2} titulo={textos.titulo} ayuda={textos.ayuda}>
+      {consulta.isPending ? (
+        <Text variant="caption">Cargando...</Text>
+      ) : opciones.length === 0 ? (
+        <Text variant="caption">No hay ninguno registrado en esta categoría.</Text>
+      ) : (
+        <View className="flex-row flex-wrap gap-2">
+          <Chip
+            etiqueta={textos.ninguna}
+            seleccionado={seleccionada === ''}
+            deshabilitado={deshabilitado}
+            onPress={() => onCambiar('')}
+          />
+          {opciones.map((opcion) => (
+            <Chip
+              key={opcion.id}
+              etiqueta={opcion.nombre}
+              seleccionado={seleccionada === opcion.id}
+              deshabilitado={deshabilitado}
+              onPress={() => onCambiar(opcion.id)}
             />
           ))}
         </View>
       )}
-    </View>
+    </Campo>
   );
 }
 
-function Flecha({
-  icono,
-  lado,
-  visible,
-  onPress,
+/* -------------------------------------------------------------------------- */
+/* Quien la ve                                                                 */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Visibilidad y, si es de un grupo, cual. Los grupos salen del arbol
+ * organizativo que la app ya cargo al arrancar: una categoria entera (todas
+ * las brigadas) o una subcategoria (una brigada).
+ */
+function SelectorVisibilidad({
+  visibilidad,
+  grupo,
+  error,
+  deshabilitado,
+  onCambiar,
 }: {
-  icono: LucideIcon;
-  lado: 'izquierda' | 'derecha';
-  visible: boolean;
-  onPress: () => void;
+  visibilidad: VisibilidadPublicacion;
+  grupo: BorradorPublicacion['grupo'];
+  error?: string;
+  deshabilitado: boolean;
+  onCambiar: (cambios: Pick<BorradorPublicacion, 'visibilidad' | 'grupo'>) => void;
 }) {
-  if (!visible) return null;
+  const arbol = useCategoriasPublicas();
+  // Sin grupos configurados, "solo un grupo" seria un camino sin salida.
+  const opciones = VISIBILIDADES.filter((opcion) => opcion.valor !== 'GRUPO' || arbol.length > 0);
 
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={lado === 'izquierda' ? 'Imagen anterior' : 'Imagen siguiente'}
-      hitSlop={8}
-      onPress={onPress}
-      className={cn(
-        'absolute top-1/2 -mt-5 h-10 w-10 items-center justify-center rounded-full bg-surface/90 active:opacity-70',
-        lado === 'izquierda' ? 'left-2' : 'right-2',
+    <Campo icono={Eye} titulo="¿Quién la ve?" error={error}>
+      <View className="gap-2">
+        {opciones.map((opcion) => (
+          <OpcionRadio
+            key={opcion.valor}
+            icono={opcion.icono}
+            etiqueta={opcion.etiqueta}
+            descripcion={opcion.descripcion}
+            seleccionada={visibilidad === opcion.valor}
+            deshabilitado={deshabilitado}
+            onPress={() => onCambiar({ visibilidad: opcion.valor, grupo: opcion.valor === 'GRUPO' ? grupo : null })}
+          />
+        ))}
+      </View>
+
+      {visibilidad === 'GRUPO' && (
+        <View className="gap-4 rounded-field border border-line p-3 dark:border-line-dark">
+          {arbol.map((categoria) => (
+            <View key={categoria.id} className="gap-2">
+              <Text variant="label" className="uppercase">
+                {categoria.nombre}
+              </Text>
+              <View className="flex-row flex-wrap gap-2">
+                <Chip
+                  etiqueta={`Todo ${categoria.nombre}`}
+                  seleccionado={grupo?.tipo === 'categoria' && grupo.id === categoria.id}
+                  deshabilitado={deshabilitado}
+                  onPress={() =>
+                    onCambiar({ visibilidad: 'GRUPO', grupo: { tipo: 'categoria', id: categoria.id } })
+                  }
+                />
+                {categoria.subcategorias.map((subcategoria) => (
+                  <Chip
+                    key={subcategoria.id}
+                    etiqueta={subcategoria.nombre}
+                    seleccionado={grupo?.tipo === 'subcategoria' && grupo.id === subcategoria.id}
+                    deshabilitado={deshabilitado}
+                    onPress={() =>
+                      onCambiar({ visibilidad: 'GRUPO', grupo: { tipo: 'subcategoria', id: subcategoria.id } })
+                    }
+                  />
+                ))}
+              </View>
+            </View>
+          ))}
+        </View>
       )}
-    >
-      <Icon as={icono} size={22} className="text-content dark:text-content" />
-    </Pressable>
-  );
-}
-
-function MensajeError({ texto }: { texto: string }) {
-  return (
-    <View className="flex-row gap-2 rounded-field border border-danger-500 bg-danger-50 p-3 dark:bg-danger-500/10">
-      <Icon as={TriangleAlert} size={18} className="text-danger-600 dark:text-danger-500" />
-      <Text variant="error" className="flex-1">
-        {texto}
-      </Text>
-    </View>
+    </Campo>
   );
 }

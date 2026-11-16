@@ -134,6 +134,8 @@ export interface Publicacion {
   dependencia: string | null;
   comunidad: string | null;
   prioridad: number;
+  /** Sale tambien en la pagina principal. Los API anteriores no la envian. */
+  paginaPrincipal?: boolean;
   /** ISO 8601. Para un boletin, su fecha de emision. */
   fechaPublicacion: string;
   /** ISO 8601. Ultima edicion desde el panel; los API anteriores no la envian. */
@@ -203,14 +205,42 @@ export interface ArchivoSubido {
   mimeType: string;
 }
 
+/**
+ * Quien ve una publicacion. Espejo de `VisibilidadPublicacion` del API:
+ *   - PUBLICA: cualquier telefono de la organizacion.
+ *   - GRUPO: solo los miembros de una categoria o subcategoria (una brigada).
+ *   - ADMINISTRATIVA: no sale en la app; solo en el panel.
+ */
+export type VisibilidadPublicacion = 'PUBLICA' | 'GRUPO' | 'ADMINISTRATIVA';
+
+/** Ciclo de vida. Archivar se hace desde el panel. */
+export type EstadoPublicacion = 'BORRADOR' | 'PUBLICADA';
+
 /** Cuerpo de `POST /comred/contenido/publicaciones`. Espejo de `CreatePublicacionDto`. */
 export interface CrearPublicacionPayload {
   seccion: SeccionContenido;
-  categoriaContenidoId: string;
+  /** Obligatoria en las secciones con tarjetas; la pagina principal no tiene. */
+  categoriaContenidoId?: string;
+  /** Como mucho uno, y solo el de su seccion (Reportes, Jornadas, Proyectos). */
+  incidenteId?: string;
+  jornadaId?: string;
+  proyectoId?: string;
   titulo: string;
   descripcion: string;
-  /** Desde la app se publica directo: no hay pantalla de borradores. */
-  estado: 'PUBLICADA';
+  dependencia?: string;
+  comunidad?: string;
+  visibilidad: VisibilidadPublicacion;
+  /** Con visibilidad GRUPO: una de las dos. */
+  grupoCategoriaId?: string;
+  grupoSubcategoriaId?: string;
+  estado: EstadoPublicacion;
+  /** 0-100. Mayor = antes en el visor. */
+  prioridad: number;
+  paginaPrincipal: boolean;
+  /** ISO 8601. Futura = programada. Sin ella, al publicar. */
+  fechaPublicacion?: string;
+  /** ISO 8601. Sin ella no vence. */
+  fechaExpiracion?: string;
   /** En el orden del carrusel: la primera es la portada. */
   media: { tipo: 'IMAGEN'; url: string; titulo?: string }[];
 }

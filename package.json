@@ -5,6 +5,7 @@
   "dependencies": {
     "@expo/ui": "~58.0.28",
     "@maplibre/maplibre-react-native": "^11.5.1",
+    "@react-native-community/datetimepicker": "9.2.1",
     "@react-native-firebase/app": "^26.4.0",
     "@react-native-firebase/messaging": "^26.4.0",
     "@tanstack/react-query": "^5.101.4",

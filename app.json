@@ -54,6 +54,7 @@
           "microphonePermission": false
         }
       ],
+      "@react-native-community/datetimepicker",
       "@maplibre/maplibre-react-native",
       [
         "expo-location",

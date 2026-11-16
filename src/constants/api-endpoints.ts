@@ -105,6 +105,8 @@ export const ENDPOINTS = {
     /** Feed paginado; filtra por seccion, tarjeta o incidente. */
     publicaciones: '/comred/contenido/publico/publicaciones',
     publicacionById: (id: string) => `/comred/contenido/publico/publicaciones/${id}`,
+    /** Las mas recientes marcadas para el inicio, de cualquier seccion. */
+    paginaPrincipal: '/comred/contenido/publico/pagina-principal',
     incidentes: '/comred/contenido/publico/incidentes',
     jornadas: '/comred/contenido/publico/jornadas',
     proyectos: '/comred/contenido/publico/proyectos',

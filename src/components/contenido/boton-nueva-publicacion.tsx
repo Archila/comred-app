@@ -2,14 +2,16 @@ import { useRouter, type Href } from 'expo-router';
 import { Plus } from 'lucide-react-native';
 import { Pressable } from 'react-native';
 
-import { PRESENTACION_SECCION, type SeccionConVisor } from '@/constants';
+import { PRESENTACION_SECCION } from '@/constants';
 import { usePuedeCrearContenido } from '@/store';
 
 import { Button } from '../ui/button';
 import { Icon } from '../ui/icon';
+import type { DestinoPublicacion } from './pantalla-nueva-publicacion';
 
 /** Ruta del formulario, con la tarjeta ya elegida si se sabe. */
-function rutaNueva(seccion: SeccionConVisor, categoriaId?: string): Href {
+function rutaNueva(seccion: DestinoPublicacion, categoriaId?: string): Href {
+  if (seccion === 'GENERAL') return '/publicar' as Href;
   const base = `/${PRESENTACION_SECCION[seccion].slug}/nueva`;
   return (categoriaId ? `${base}?categoriaId=${categoriaId}` : base) as Href;
 }
@@ -26,7 +28,7 @@ export function BotonNuevaPublicacion({
   categoriaId,
   forma = 'boton',
 }: {
-  seccion: SeccionConVisor;
+  seccion: DestinoPublicacion;
   categoriaId?: string;
   forma?: 'boton' | 'cabecera';
 }) {

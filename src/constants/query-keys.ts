@@ -65,6 +65,8 @@ export const QUERY_KEYS = {
     /** El visor de una seccion, arrancando en una tarjeta. */
     visor: (seccion: SeccionContenido, categoriaInicialId: string, continua: boolean) =>
       [...QUERY_KEYS.contenido.all, 'visor', seccion, categoriaInicialId, continua] as const,
+    paginaPrincipal: (limit: number) =>
+      [...QUERY_KEYS.contenido.all, 'pagina-principal', limit] as const,
     incidentes: (params?: IncidentesParams) =>
       [...QUERY_KEYS.contenido.all, 'incidentes', params ?? {}] as const,
     jornadas: (params?: EntidadesParams) =>
