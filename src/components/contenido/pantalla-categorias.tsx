@@ -28,6 +28,7 @@ import { ErrorState } from '../feedback/error-state';
 import { LoadingScreen } from '../feedback/loading-screen';
 import { Icon } from '../ui/icon';
 import { Text } from '../ui/text';
+import { BotonNuevaPublicacion } from './boton-nueva-publicacion';
 import { Etiqueta } from './etiqueta';
 
 const MARGEN = 16;
@@ -75,6 +76,8 @@ export function PantallaCategorias({ seccion }: { seccion: SeccionConVisor }) {
         keyExtractor={(categoria) => categoria.id}
         contentContainerStyle={{ padding: MARGEN, gap: SEPARACION }}
         showsVerticalScrollIndicator={false}
+        // Solo para administradores; a los demas no les ocupa sitio.
+        ListHeaderComponent={<BotonNuevaPublicacion seccion={seccion} />}
         renderItem={({ item }) => (
           <Tarjeta
             categoria={item}

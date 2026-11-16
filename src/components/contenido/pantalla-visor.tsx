@@ -28,6 +28,7 @@ import { LoadingScreen } from '../feedback/loading-screen';
 import { Button } from '../ui/button';
 import { Text } from '../ui/text';
 import { entidadDe } from './acciones';
+import { BotonNuevaPublicacion } from './boton-nueva-publicacion';
 import { DetallePublicacion } from './detalle-publicacion';
 import { PublicacionSlide } from './publicacion-slide';
 
@@ -114,6 +115,7 @@ export function PantallaVisor({ seccion }: { seccion: SeccionConVisor }) {
           title="Aún no hay publicaciones"
           description={`Cuando se publique algo en "${tarjetaInicial.nombre}" lo verás aquí.`}
         />
+        <BotonNuevaPublicacion seccion={seccion} categoriaId={tarjetaInicial.id} />
         {visor.hasNextPage ? (
           <Button
             label="Ver las siguientes categorías"
@@ -181,7 +183,15 @@ export function PantallaVisor({ seccion }: { seccion: SeccionConVisor }) {
       className="flex-1 bg-surface dark:bg-surface-dark"
       onLayout={(evento) => setAlto(Math.floor(evento.nativeEvent.layout.height))}
     >
-      <Stack.Screen options={{ title: titulo }} />
+      <Stack.Screen
+        options={{
+          title: titulo,
+          // Publicar en la tarjeta que se esta viendo. Solo administradores.
+          headerRight: () => (
+            <BotonNuevaPublicacion seccion={seccion} categoriaId={categoriaId} forma="cabecera" />
+          ),
+        }}
+      />
       {contenido}
 
       {aviso && (

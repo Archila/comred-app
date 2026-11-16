@@ -46,6 +46,14 @@
       "@react-native-firebase/app",
       "@react-native-firebase/messaging",
       "expo-video",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "COMRED usa tus fotos solo para adjuntarlas a las publicaciones que creas.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ],
       "@maplibre/maplibre-react-native",
       [
         "expo-location",

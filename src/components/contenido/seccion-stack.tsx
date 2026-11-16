@@ -1,10 +1,11 @@
 import { Stack } from 'expo-router';
 
 import { PRESENTACION_SECCION, type SeccionConVisor } from '@/constants';
-import { useBrandColors } from '@/store';
+import { useBrandColors, usePuedeCrearContenido } from '@/store';
 
 /**
- * Navegacion de una seccion con visor: tarjetas -> visor de la tarjeta.
+ * Navegacion de una seccion con visor: tarjetas -> visor de la tarjeta, y
+ * -> nueva publicacion para los administradores.
  *
  * Igual que la de avisos enviados, es un Stack dentro de la pestana para que
  * "atras" vuelva a las tarjetas, y su cabecera hace de barra de seccion: va
@@ -13,6 +14,7 @@ import { useBrandColors } from '@/store';
  */
 export function SeccionStack({ seccion }: { seccion: SeccionConVisor }) {
   const brand = useBrandColors();
+  const puedeCrear = usePuedeCrearContenido();
 
   return (
     <Stack
@@ -26,6 +28,14 @@ export function SeccionStack({ seccion }: { seccion: SeccionConVisor }) {
     >
       <Stack.Screen name="index" options={{ title: PRESENTACION_SECCION[seccion].titulo }} />
       <Stack.Screen name="[categoriaId]" options={{ title: '' }} />
+      {/*
+        Como `Tabs.Protected` en el layout de la app: sin sesion de
+        administrador la ruta no existe, ni siquiera con un enlace. Al cerrar
+        sesion estando en ella, se vuelve a las tarjetas.
+      */}
+      <Stack.Protected guard={puedeCrear}>
+        <Stack.Screen name="nueva" options={{ title: 'Nueva publicación' }} />
+      </Stack.Protected>
     </Stack>
   );
 }

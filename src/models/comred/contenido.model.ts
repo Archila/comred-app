@@ -177,3 +177,46 @@ export interface EntidadesParams {
 
 /** Los incidentes no filtran por nada mas. */
 export type IncidentesParams = EntidadesParams;
+
+/* -------------------------------------------------------------------------- */
+/* Creacion desde la app (solo administradores)                                */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Una foto elegida en el telefono, ya comprimida y lista para subir. Vive en
+ * el aparato hasta que se publica: `uri` es un archivo local (o un blob en web).
+ */
+export interface ImagenComprimida {
+  /** Unico mientras dura el formulario. Sirve de llave y para no resubirla. */
+  id: string;
+  uri: string;
+  ancho: number;
+  alto: number;
+}
+
+/** Lo que devuelve `POST /storage/upload-multiple/:categoria` por cada archivo. */
+export interface ArchivoSubido {
+  fileName: string;
+  /** Ruta relativa del modulo storage; es la que se guarda en la publicacion. */
+  url: string;
+  size: number;
+  mimeType: string;
+}
+
+/** Cuerpo de `POST /comred/contenido/publicaciones`. Espejo de `CreatePublicacionDto`. */
+export interface CrearPublicacionPayload {
+  seccion: SeccionContenido;
+  categoriaContenidoId: string;
+  titulo: string;
+  descripcion: string;
+  /** Desde la app se publica directo: no hay pantalla de borradores. */
+  estado: 'PUBLICADA';
+  /** En el orden del carrusel: la primera es la portada. */
+  media: { tipo: 'IMAGEN'; url: string; titulo?: string }[];
+}
+
+/** Lo que la app usa de la respuesta del alta (el API devuelve la entidad entera). */
+export interface PublicacionCreada {
+  id: string;
+  categoriaContenidoId: string | null;
+}

@@ -101,3 +101,13 @@ export const useAuthUser = () => useAuthStore((state) => state.user);
 export const useAuthStatus = () => useAuthStore((state) => state.status);
 export const useIsAuthenticated = () => useAuthStore((state) => state.status === 'authenticated');
 export const useIsAdmin = () => useAuthStore((state) => state.user?.rol?.esAdmin ?? false);
+
+/**
+ * Crear publicaciones desde la app: sesion abierta Y rol administrador. La
+ * sesion se comprueba aparte porque, mientras se valida el token al arrancar,
+ * puede haber un usuario cacheado que luego resulte rechazado.
+ *
+ * Es comodidad, no seguridad: el API vuelve a exigir el permiso `PUB_CREAR`.
+ */
+export const usePuedeCrearContenido = () =>
+  useAuthStore((state) => state.status === 'authenticated' && Boolean(state.user?.rol?.esAdmin));

@@ -111,6 +111,14 @@ export const ENDPOINTS = {
   },
 
   /**
+   * Gestion del contenido (lo que hace el panel). Exige JWT y permiso, y fuera
+   * de `contenido.base` a proposito: un 401 aqui es de la SESION, no del aparato.
+   */
+  contenidoPanel: {
+    publicaciones: '/comred/contenido/publicaciones',
+  },
+
+  /**
    * Mapa general del municipio. Como `contenido`: solo GET y con las
    * cabeceras del dispositivo.
    */
@@ -133,6 +141,8 @@ export const ENDPOINTS = {
 
   storage: {
     upload: '/storage/upload',
+    /** Varios archivos en una peticion (campo `files`). Todo o nada. */
+    uploadMultiple: (categoria: string) => `/storage/upload-multiple/${categoria}`,
     file: (categoria: string, nombre: string) => `/storage/${categoria}/${nombre}`,
   },
 } as const;
