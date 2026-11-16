@@ -1,19 +1,45 @@
 import '@/global.css';
 
-import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
+import { DarkTheme, DefaultTheme, Stack, ThemeProvider, type Theme } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
+import { colorScheme as nativewindColorScheme } from 'nativewind';
 import { useEffect } from 'react';
-import { useColorScheme } from 'react-native';
+import { Platform } from 'react-native';
 
 import { ActualizacionObligatoriaScreen, DispositivoErrorScreen } from '@/components';
-import { useAvisoActualizacion, useVersionApp } from '@/hooks';
+import { Colors, ESQUEMA_FORZADO } from '@/constants';
+import { useAvisoActualizacion, useColorScheme, useVersionApp } from '@/hooks';
 import { AppProviders } from '@/providers';
 import { useAuthStatus, useDispositivoStatus } from '@/store';
 
 // El splash se mantiene visible hasta que el dispositivo este resuelto y
 // sepamos si hay sesion activa.
 SplashScreen.preventAutoHideAsync();
+
+// Tema impuesto por `paleta.modo` (src/config/paleta.js). Va antes del primer
+// render para que las clases `dark:` resuelvan bien desde el inicio. En web
+// solo hay `document` en el navegador, no durante el renderizado estatico.
+if (ESQUEMA_FORZADO && (Platform.OS !== 'web' || typeof document !== 'undefined')) {
+  nativewindColorScheme.set(ESQUEMA_FORZADO);
+}
+
+/** Tema de React Navigation con los fondos de la paleta: sin destellos entre pantallas. */
+function temaNavegacion(base: Theme, colores: typeof Colors.light): Theme {
+  return {
+    ...base,
+    colors: {
+      ...base.colors,
+      background: colores.background,
+      card: colores.surface,
+      text: colores.text,
+      border: colores.border,
+    },
+  };
+}
+
+const TEMA_CLARO = temaNavegacion(DefaultTheme, Colors.light);
+const TEMA_OSCURO = temaNavegacion(DarkTheme, Colors.dark);
 
 // La app siempre arranca en las pantallas publicas, y el login se apila
 // encima: "atras" desde el login vuelve a la app aunque se llegue por enlace.
@@ -68,7 +94,7 @@ function RootNavigator() {
     }
   }, [isArrancando]);
 
-  const theme = colorScheme === 'dark' ? DarkTheme : DefaultTheme;
+  const theme = colorScheme === 'dark' ? TEMA_OSCURO : TEMA_CLARO;
 
   // Mientras se resuelve el dispositivo y se restaura la sesion seguimos
   // mostrando el splash nativo.

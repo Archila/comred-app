@@ -1,45 +1,46 @@
 import { Platform } from 'react-native';
 
+import paleta from '@/config/paleta';
+
 /**
  * Valores crudos del tema.
  *
- * La fuente de verdad del estilo es `tailwind.config.js` (clases `className`).
- * Este archivo solo existe para los casos donde React Native exige un color
- * literal y no admite clases: navegacion, StatusBar, ActivityIndicator.
+ * Los colores se editan en `src/config/paleta.js`, no aqui. Este archivo solo
+ * los expone para los casos donde React Native exige un color literal y no
+ * admite clases: navegacion, placeholders de inputs, StatusBar.
  *
- * OJO con `brand`: es solo el FALLBACK de COMRED central. Los colores reales
- * dependen de la organizacion, asi que en componentes hay que leerlos con
- * `useBrandColors()` (hooks/comred), no importarlos de aqui.
+ * Los colores de MARCA no estan aqui: dependen de la organizacion y se leen
+ * con `useBrandColors()` (store), nunca de una constante.
  */
 export const Colors = {
-  /** Marca por defecto. Debe coincidir con los valores de `addBase` en tailwind.config.js. */
-  brand: {
-    500: '#D7141A',
-    600: '#B71116',
-    700: '#970E12',
-    foreground: '#FFFFFF',
-  },
   light: {
-    background: '#FFFFFF',
-    surface: '#F8FAFC',
-    border: '#E2E8F0',
-    text: '#0F172A',
-    textMuted: '#475569',
-    textSubtle: '#94A3B8',
-    danger: '#EF4444',
+    background: paleta.claro.fondo,
+    surface: paleta.claro.fondoSuave,
+    border: paleta.claro.borde,
+    text: paleta.claro.texto,
+    textMuted: paleta.claro.textoSecundario,
+    textSubtle: paleta.claro.textoTenue,
+    danger: paleta.estados.error[500],
   },
   dark: {
-    background: '#0B1220',
-    surface: '#111A2E',
-    border: '#1E293B',
-    text: '#E2E8F0',
-    textMuted: '#94A3B8',
-    textSubtle: '#64748B',
-    danger: '#EF4444',
+    background: paleta.oscuro.fondo,
+    surface: paleta.oscuro.formulario,
+    border: paleta.oscuro.borde,
+    text: paleta.oscuro.texto,
+    textMuted: paleta.oscuro.textoSecundario,
+    textSubtle: paleta.oscuro.textoTenue,
+    danger: paleta.estados.error[500],
   },
-} as const;
+};
 
 export type ColorTheme = typeof Colors.light;
+
+/**
+ * Esquema impuesto por `paleta.modo`, o `null` si la app sigue al sistema.
+ * Lo impone `app/_layout.tsx` al arrancar y lo respeta `useColorScheme()` (hooks).
+ */
+export const ESQUEMA_FORZADO: 'light' | 'dark' | null =
+  paleta.modo === 'oscuro' ? 'dark' : paleta.modo === 'claro' ? 'light' : null;
 
 export const Fonts = Platform.select({
   ios: {

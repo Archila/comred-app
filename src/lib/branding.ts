@@ -1,3 +1,5 @@
+import paleta from '@/config/paleta';
+
 import {
   generateColorScale,
   getReadableForeground,
@@ -20,12 +22,12 @@ import {
 
 /**
  * Marca por defecto: rojo de accion (primario) y azul institucional del
- * encabezado y el menu (secundario). Debe coincidir con `addBase` de
- * tailwind.config.js.
+ * encabezado y el menu (secundario). Sale de `src/config/paleta.js`, la misma
+ * fuente que usa `addBase` de tailwind.config.js.
  */
 export const DEFAULT_BRAND = {
-  primario: '#D7141A',
-  secundario: '#0B1F4B',
+  primario: paleta.marca.primario,
+  secundario: paleta.marca.secundario,
 } as const;
 
 export interface BrandColors {

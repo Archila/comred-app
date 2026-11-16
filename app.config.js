@@ -38,12 +38,34 @@ function versionACodigo(version) {
   return mayor * 10000 + menor * 100 + parche;
 }
 
+/**
+ * COLORES
+ * -------
+ * Salen de `src/config/paleta.js`: el tema nativo (`userInterfaceStyle`, que
+ * reemplaza al de `app.json`) y el fondo del splash. Solo se aplican al
+ * recompilar (`npx expo prebuild` + `npx expo run:android`).
+ */
+const paleta = require('./src/config/paleta');
+
+const ESTILO_INTERFAZ = { oscuro: 'dark', claro: 'light', sistema: 'automatic' };
+
+/** Pone el azul de la marca como fondo del splash. */
+function conFondoDeSplash(plugins = []) {
+  return plugins.map((plugin) =>
+    Array.isArray(plugin) && plugin[0] === 'expo-splash-screen'
+      ? [plugin[0], { ...plugin[1], backgroundColor: paleta.marca.secundario }]
+      : plugin,
+  );
+}
+
 module.exports = ({ config }) => {
   const codigo = versionACodigo(config.version);
 
   return {
     ...config,
+    userInterfaceStyle: ESTILO_INTERFAZ[paleta.modo] ?? config.userInterfaceStyle,
     android: { ...config.android, versionCode: codigo },
     ios: { ...config.ios, buildNumber: String(codigo) },
+    plugins: conFondoDeSplash(config.plugins),
   };
 };

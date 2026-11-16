@@ -21,6 +21,7 @@ import {
   type LucideIcon,
 } from 'lucide-react-native';
 
+import paleta from '@/config/paleta';
 import type { EstadoElementoGeografico } from '@/models';
 
 import type { EstiloInsignia } from './presentacion-contenido';
@@ -54,8 +55,8 @@ export const MAPA_CONFIG = {
   estiloUrl: 'https://tiles.openfreemap.org/styles/liberty',
   /** Fuente de las etiquetas: debe existir en los glifos del estilo. */
   fuenteEtiquetas: 'Noto Sans Regular',
-  /** Color del contorno del municipio: el azul institucional. */
-  colorLimite: '#0B1F4B',
+  /** Color del contorno del municipio: el azul institucional (`paleta.marca.secundario`). */
+  colorLimite: paleta.marca.secundario,
 } as const;
 
 /**

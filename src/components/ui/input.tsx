@@ -1,15 +1,10 @@
 import type { LucideIcon } from 'lucide-react-native';
 import { Eye, EyeOff } from 'lucide-react-native';
 import { useState } from 'react';
-import {
-  Pressable,
-  TextInput,
-  useColorScheme,
-  View,
-  type TextInputProps,
-} from 'react-native';
+import { Pressable, TextInput, View, type TextInputProps } from 'react-native';
 
 import { Colors } from '@/constants';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { cn } from '@/lib';
 
 import { Icon } from './icon';
