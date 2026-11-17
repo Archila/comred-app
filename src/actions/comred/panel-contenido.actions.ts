@@ -5,8 +5,10 @@ import type {
   ArchivoSubido,
   CategoriaContenido,
   CrearIncidentePayload,
+  CrearJornadaPayload,
   ImagenComprimida,
   IncidenteCreado,
+  JornadaCreada,
 } from '@/models';
 
 /**
@@ -17,6 +19,12 @@ export const panelContenidoActions = {
   /** `POST /comred/contenido/incidentes` (exige `INC_CREAR`). */
   async crearIncidente(payload: CrearIncidentePayload): Promise<IncidenteCreado> {
     const response = await api.post<IncidenteCreado>(ENDPOINTS.contenidoPanel.incidentes, payload);
+    return response.data;
+  },
+
+  /** `POST /comred/contenido/jornadas` (exige `JOR_CREAR`). */
+  async crearJornada(payload: CrearJornadaPayload): Promise<JornadaCreada> {
+    const response = await api.post<JornadaCreada>(ENDPOINTS.contenidoPanel.jornadas, payload);
     return response.data;
   },
 

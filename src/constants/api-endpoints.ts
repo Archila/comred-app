@@ -119,6 +119,7 @@ export const ENDPOINTS = {
   contenidoPanel: {
     publicaciones: '/comred/contenido/publicaciones',
     incidentes: '/comred/contenido/incidentes',
+    jornadas: '/comred/contenido/jornadas',
     /** PUT: editar una tarjeta (la portada, desde la app). */
     categoriaById: (id: string) => `/comred/contenido/categorias/${id}`,
   },

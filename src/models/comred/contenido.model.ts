@@ -290,6 +290,36 @@ export interface IncidenteCreado {
   categoriaContenidoId: string;
 }
 
+/** Cuerpo de `POST /comred/contenido/jornadas`. Espejo de `CreateJornadaDto`. */
+export interface CrearJornadaPayload {
+  /** El tipo de jornada: una tarjeta de Jornadas. */
+  categoriaContenidoId: string;
+  nombre: string;
+  descripcion?: string;
+  /** Institucion organizadora. */
+  institucion?: string;
+  /** ISO 8601. */
+  fechaInicio: string;
+  fechaFin?: string;
+  /** Texto para la gente ("8:00 a 15:00"). */
+  horario?: string;
+  lugar?: string;
+  /** Comunidad beneficiada. */
+  comunidad?: string;
+  servicios?: string;
+  requisitos?: string;
+  contacto?: string;
+  latitud?: number;
+  longitud?: number;
+  /** Sin el, el API lo calcula de las fechas. */
+  estado?: EstadoJornada;
+}
+
+export interface JornadaCreada {
+  id: string;
+  categoriaContenidoId: string;
+}
+
 /** Lo que la app usa de la respuesta del alta (el API devuelve la entidad entera). */
 export interface PublicacionCreada {
   id: string;

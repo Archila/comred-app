@@ -3,6 +3,7 @@ import { useRouter, type Href } from 'expo-router';
 import {
   CalendarClock,
   CalendarDays,
+  CalendarPlus,
   Camera,
   HardHat,
   Siren,
@@ -170,8 +171,9 @@ function TituloSeccion({ presentacion }: { presentacion: PresentacionSeccion }) 
 }
 
 /**
- * Lo que solo ve un administrador sobre las tarjetas. En Reportes lo primero
- * es registrar el desastre; publicar sobre uno ya registrado va despues.
+ * Lo que solo ve un administrador sobre las tarjetas. En Reportes y Jornadas
+ * lo primero es registrar el desastre o la jornada; publicar sobre uno ya
+ * registrado (el seguimiento) va despues.
  */
 function AccionesAdministrador({
   seccion,
@@ -195,9 +197,18 @@ function AccionesAdministrador({
           onPress={() => router.push('/reportes/reportar' as Href)}
         />
       )}
+      {seccion === 'JORNADAS' && (
+        <Button
+          label="Nueva jornada"
+          icon={CalendarPlus}
+          size="lg"
+          fullWidth
+          onPress={() => router.push('/jornadas/registrar' as Href)}
+        />
+      )}
       <BotonNuevaPublicacion
         seccion={seccion}
-        variante={seccion === 'REPORTES' ? 'outline' : 'primary'}
+        variante={seccion === 'REPORTES' || seccion === 'JORNADAS' ? 'outline' : 'primary'}
       />
       {conCamara && (
         <Text variant="caption" className="text-center">

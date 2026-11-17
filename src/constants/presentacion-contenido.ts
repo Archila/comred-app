@@ -13,6 +13,7 @@ import {
   Construction,
   DoorOpen,
   Droplets,
+  Eye,
   FileText,
   Flame,
   GraduationCap,
@@ -148,6 +149,7 @@ const ICONOS: Record<string, LucideIcon> = {
   construction: Construction,
   'door-open': DoorOpen,
   droplets: Droplets,
+  eye: Eye,
   'file-text': FileText,
   flame: Flame,
   'graduation-cap': GraduationCap,
@@ -199,9 +201,10 @@ const PALABRAS: [RegExp, LucideIcon][] = [
   [/higiene|saneamiento|agua/, Droplets],
   [/evacua/, DoorOpen],
   [/recupera/, HandHeart],
-  [/mascota|perro|gato|veterinari/, PawPrint],
+  [/mascota|perro|gato|veterinari|rabia|antirrabic/, PawPrint],
   [/vacuna/, Syringe],
   [/psicol/, Brain],
+  [/oftalmol|visual|\bvista/, Eye],
   [/odontol|dental/, Smile],
   [/nutrici/, Apple],
   [/medic|salud/, Stethoscope],
@@ -235,11 +238,12 @@ export function iconoDeCategoria(
 }
 
 /* -------------------------------------------------------------------------- */
-/* Foto fija de cada tipo de boletin                                           */
+/* Foto fija de cada tipo de boletin y de jornada                              */
 /* -------------------------------------------------------------------------- */
 
 /**
- * Los tipos de boletin (migracion `TiposBoletin` del API) llevan una foto
+ * Los tipos de boletin y de jornada (migraciones `TiposBoletin` y
+ * `TiposJornada` del API) llevan una foto
  * FIJA, empaquetada en el binario: se ve sin red, es la misma en todas las
  * municipalidades y no se cambia desde la app. Para poner la foto real basta
  * con sustituir el archivo conservando el nombre.
@@ -255,6 +259,15 @@ const PORTADAS_FIJAS: Partial<Record<SeccionContenido, Record<string, number>>> 
     'prevencion de incendios': require('@/assets/images/boletines/prevencion-de-incendios.jpeg'),
     'seguridad vial y comunitaria': require('@/assets/images/boletines/seguridad-vial-y-comunitaria.jpeg'),
     'recuperacion despues de desastres': require('@/assets/images/boletines/recuperacion-despues-de-desastres.jpeg'),
+  },
+  JORNADAS: {
+    'jornada medica': require('@/assets/images/jornadas/jornada-medica.jpeg'),
+    'vacunacion infantil': require('@/assets/images/jornadas/vacunacion-infantil.jpeg'),
+    'vacunacion contra la rabia': require('@/assets/images/jornadas/vacunacion-contra-la-rabia.jpeg'),
+    'jornada psicologica': require('@/assets/images/jornadas/jornada-psicologica.jpeg'),
+    'jornada oftalmologica': require('@/assets/images/jornadas/jornada-oftalmologica.jpeg'),
+    'jornada odontologica': require('@/assets/images/jornadas/jornada-odontologica.jpeg'),
+    'jornada de nutricion': require('@/assets/images/jornadas/jornada-de-nutricion.jpeg'),
   },
 };
 

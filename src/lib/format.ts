@@ -41,6 +41,18 @@ export function formatDateTime(value?: string | Date | null): string {
   }).format(date);
 }
 
+/** Solo la hora, sin cero a la izquierda: "8:00", "15:30". */
+export function formatHora(value?: string | Date | null): string {
+  const date = value instanceof Date ? value : parseApiDate(value);
+  if (!date) return '';
+  return new Intl.DateTimeFormat(LOCALE, {
+    timeZone: TIME_ZONE,
+    hour: 'numeric',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).format(date);
+}
+
 /**
  * Fecha sin hora que el API envia como texto 'AAAA-MM-DD' (inicio de un
  * proyecto). No pasa por `Date`: interpretarla como medianoche UTC la
