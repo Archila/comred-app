@@ -1,6 +1,7 @@
 export * from './boton-nueva-publicacion';
 export * from './pantalla-categorias';
 export * from './pantalla-nueva-publicacion';
+export * from './pantalla-reportar-incidente';
 export * from './tarjeta-publicacion';
 export * from './detalle-publicacion';
 export * from './pantalla-visor';

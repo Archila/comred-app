@@ -1,8 +1,16 @@
 import { Image } from 'expo-image';
 import { useRouter, type Href } from 'expo-router';
-import { CalendarClock, CalendarDays, HardHat, Siren, TriangleAlert, type LucideIcon } from 'lucide-react-native';
+import {
+  CalendarClock,
+  CalendarDays,
+  Camera,
+  HardHat,
+  Siren,
+  TriangleAlert,
+  type LucideIcon,
+} from 'lucide-react-native';
 import { useState } from 'react';
-import { FlatList, Pressable, RefreshControl, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, RefreshControl, View } from 'react-native';
 
 import {
   PRESENTACION_SECCION,
@@ -14,6 +22,7 @@ import {
   resumirIncidentes,
   resumirJornadas,
   resumirProyectos,
+  useCambiarPortada,
   useCategoriasContenido,
   useIncidentesPublicos,
   useJornadasPublicas,
@@ -21,11 +30,12 @@ import {
 } from '@/hooks';
 import { cn, resolveAssetUrl } from '@/lib';
 import type { CategoriaContenido } from '@/models';
-import { useBrandColors } from '@/store';
+import { useBrandColors, usePuedeCrearContenido } from '@/store';
 
 import { EmptyState } from '../feedback/empty-state';
 import { ErrorState } from '../feedback/error-state';
 import { LoadingScreen } from '../feedback/loading-screen';
+import { Button } from '../ui/button';
 import { Icon } from '../ui/icon';
 import { Text } from '../ui/text';
 import { BotonNuevaPublicacion } from './boton-nueva-publicacion';
@@ -49,10 +59,12 @@ export function PantallaCategorias({ seccion }: { seccion: SeccionConVisor }) {
   const presentacion = PRESENTACION_SECCION[seccion];
   const router = useRouter();
   const brand = useBrandColors();
+  const puedeCrear = usePuedeCrearContenido();
   const [alto, setAlto] = useState(0);
 
   const categorias = useCategoriasContenido(seccion);
   const { marcas, refrescar: refrescarMarcas } = useMarcasDeTarjetas(seccion);
+  const portada = useCambiarPortada();
 
   const altoTarjeta = Math.max(ALTO_MINIMO, Math.floor((alto - MARGEN * 2 - SEPARACION) / 2));
 
@@ -77,7 +89,11 @@ export function PantallaCategorias({ seccion }: { seccion: SeccionConVisor }) {
         contentContainerStyle={{ padding: MARGEN, gap: SEPARACION }}
         showsVerticalScrollIndicator={false}
         // Solo para administradores; a los demas no les ocupa sitio.
-        ListHeaderComponent={<BotonNuevaPublicacion seccion={seccion} />}
+        ListHeaderComponent={
+          puedeCrear ? (
+            <AccionesAdministrador seccion={seccion} errorPortada={portada.errorMessage} />
+          ) : undefined
+        }
         renderItem={({ item }) => (
           <Tarjeta
             categoria={item}
@@ -85,6 +101,9 @@ export function PantallaCategorias({ seccion }: { seccion: SeccionConVisor }) {
             alto={altoTarjeta}
             marca={marcas[item.id]}
             onPress={() => router.push(`/${presentacion.slug}/${item.id}` as Href)}
+            onCambiarPortada={puedeCrear ? () => portada.mutate(item.id) : undefined}
+            cambiandoPortada={portada.isPending && portada.variables === item.id}
+            ocupado={portada.isPending}
           />
         )}
         refreshControl={
@@ -103,11 +122,81 @@ export function PantallaCategorias({ seccion }: { seccion: SeccionConVisor }) {
   }
 
   return (
-    <View
-      className="flex-1 bg-surface-muted dark:bg-surface-dark"
-      onLayout={(evento) => setAlto(Math.floor(evento.nativeEvent.layout.height))}
-    >
-      {contenido}
+    <View className="flex-1 bg-surface-muted dark:bg-surface-dark">
+      <TituloSeccion presentacion={presentacion} />
+      {/* El alto que se mide es el que queda bajo el titulo: dos tarjetas en el. */}
+      <View className="flex-1" onLayout={(evento) => setAlto(Math.floor(evento.nativeEvent.layout.height))}>
+        {contenido}
+      </View>
+    </View>
+  );
+}
+
+/**
+ * Titulo de la seccion en una pastilla: icono de la seccion, separador y
+ * nombre. Sustituye a la barra del Stack en esta pantalla; el visor la
+ * conserva, con su flecha para volver aqui.
+ */
+function TituloSeccion({ presentacion }: { presentacion: PresentacionSeccion }) {
+  return (
+    <View className="items-center px-4 pt-4">
+      <View
+        accessibilityRole="header"
+        className="max-w-full flex-row items-center gap-3 rounded-full border-2 border-secondary-300 bg-secondary-600 py-2 pl-2 pr-6"
+      >
+        <View className={cn('h-12 w-14 items-center justify-center rounded-2xl', presentacion.fondoIcono)}>
+          <Icon as={presentacion.icono} size={28} className={presentacion.textoIcono} />
+        </View>
+        <View className="h-8 w-px bg-secondary-300" />
+        <Text
+          variant="plain"
+          className="shrink text-2xl font-bold text-secondary-foreground"
+          numberOfLines={1}
+          adjustsFontSizeToFit
+        >
+          {presentacion.titulo}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+/**
+ * Lo que solo ve un administrador sobre las tarjetas. En Reportes lo primero
+ * es registrar el desastre; publicar sobre uno ya registrado va despues.
+ */
+function AccionesAdministrador({
+  seccion,
+  errorPortada,
+}: {
+  seccion: SeccionConVisor;
+  errorPortada: string | null;
+}) {
+  const router = useRouter();
+
+  return (
+    <View className="gap-3">
+      {seccion === 'REPORTES' && (
+        <Button
+          label="Reportar desastre"
+          icon={Siren}
+          size="lg"
+          fullWidth
+          onPress={() => router.push('/reportes/reportar' as Href)}
+        />
+      )}
+      <BotonNuevaPublicacion
+        seccion={seccion}
+        variante={seccion === 'REPORTES' ? 'outline' : 'primary'}
+      />
+      <Text variant="caption" className="text-center">
+        Toca la cámara de una tarjeta para cambiar su fotografía.
+      </Text>
+      {errorPortada && (
+        <Text variant="error" className="text-center">
+          {errorPortada}
+        </Text>
+      )}
     </View>
   );
 }
@@ -198,15 +287,24 @@ function Tarjeta({
   alto,
   marca,
   onPress,
+  onCambiarPortada,
+  cambiandoPortada = false,
+  ocupado = false,
 }: {
   categoria: CategoriaContenido;
   presentacion: PresentacionSeccion;
   alto: number;
   marca?: MarcaTarjeta;
   onPress: () => void;
+  /** Solo para administradores: sin el, no hay boton de camara. */
+  onCambiarPortada?: () => void;
+  cambiandoPortada?: boolean;
+  /** Otra tarjeta esta cambiando su foto: una a la vez. */
+  ocupado?: boolean;
 }) {
   const portada = resolveAssetUrl(categoria.portadaUrl);
   const icono = iconoDeCategoria(categoria, presentacion.icono);
+  const brand = useBrandColors();
 
   return (
     <Pressable
@@ -247,9 +345,29 @@ function Tarjeta({
         </View>
       )}
 
-      <View className="flex-1 justify-end gap-2 p-4">
+      {onCambiarPortada && (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Cambiar la fotografía de ${categoria.nombre}`}
+          hitSlop={8}
+          disabled={ocupado}
+          onPress={onCambiarPortada}
+          className={cn(
+            'absolute left-3 top-3 h-11 w-11 items-center justify-center rounded-full bg-black/60 active:opacity-70',
+            ocupado && !cambiandoPortada && 'opacity-50',
+          )}
+        >
+          {cambiandoPortada ? (
+            <ActivityIndicator color={brand.primary} />
+          ) : (
+            <Icon as={Camera} size={20} className="text-white dark:text-white" />
+          )}
+        </Pressable>
+      )}
+
+      <View className="flex-1 justify-end gap-3 p-5">
         <IconoCirculo icono={icono} presentacion={presentacion} />
-        <Text variant="plain" className="text-2xl font-bold leading-7 text-white" numberOfLines={2}>
+        <Text variant="plain" className="text-3xl font-bold leading-9 text-white" numberOfLines={2}>
           {categoria.nombre}
         </Text>
         {categoria.descripcion && (
@@ -271,9 +389,9 @@ function IconoCirculo({
 }) {
   return (
     <View
-      className={cn('h-12 w-12 items-center justify-center rounded-full', presentacion.fondoIcono)}
+      className={cn('h-16 w-16 items-center justify-center rounded-full', presentacion.fondoIcono)}
     >
-      <Icon as={icono} size={24} className={presentacion.textoIcono} />
+      <Icon as={icono} size={32} className={presentacion.textoIcono} />
     </View>
   );
 }

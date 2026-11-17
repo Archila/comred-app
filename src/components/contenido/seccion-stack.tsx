@@ -26,7 +26,11 @@ export function SeccionStack({ seccion }: { seccion: SeccionConVisor }) {
         headerBackButtonDisplayMode: 'minimal',
       }}
     >
-      <Stack.Screen name="index" options={{ title: PRESENTACION_SECCION[seccion].titulo }} />
+      {/* Sin barra: la pantalla de tarjetas pinta su propio titulo en pastilla. */}
+      <Stack.Screen
+        name="index"
+        options={{ title: PRESENTACION_SECCION[seccion].titulo, headerShown: false }}
+      />
       <Stack.Screen name="[categoriaId]" options={{ title: '' }} />
       {/*
         Como `Tabs.Protected` en el layout de la app: sin sesion de
@@ -35,6 +39,9 @@ export function SeccionStack({ seccion }: { seccion: SeccionConVisor }) {
       */}
       <Stack.Protected guard={puedeCrear}>
         <Stack.Screen name="nueva" options={{ title: 'Nueva publicación' }} />
+        {seccion === 'REPORTES' && (
+          <Stack.Screen name="reportar" options={{ title: 'Reportar desastre' }} />
+        )}
       </Stack.Protected>
     </Stack>
   );

@@ -27,10 +27,13 @@ export function BotonNuevaPublicacion({
   seccion,
   categoriaId,
   forma = 'boton',
+  variante = 'primary',
 }: {
   seccion: DestinoPublicacion;
   categoriaId?: string;
   forma?: 'boton' | 'cabecera';
+  /** Con forma `boton`: secundario cuando hay otra accion principal al lado. */
+  variante?: 'primary' | 'outline';
 }) {
   const router = useRouter();
   const puedeCrear = usePuedeCrearContenido();
@@ -53,5 +56,14 @@ export function BotonNuevaPublicacion({
     );
   }
 
-  return <Button label="Nueva publicación" icon={Plus} size="lg" fullWidth onPress={abrir} />;
+  return (
+    <Button
+      label="Nueva publicación"
+      icon={Plus}
+      variant={variante}
+      size="lg"
+      fullWidth
+      onPress={abrir}
+    />
+  );
 }

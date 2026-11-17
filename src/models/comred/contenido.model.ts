@@ -245,6 +245,31 @@ export interface CrearPublicacionPayload {
   media: { tipo: 'IMAGEN'; url: string; titulo?: string }[];
 }
 
+/** Cuerpo de `POST /comred/contenido/incidentes`. Espejo de `CreateIncidenteDto`. */
+export interface CrearIncidentePayload {
+  /** El tipo de desastre: una tarjeta de Reportes. */
+  categoriaContenidoId: string;
+  nombre: string;
+  descripcion?: string;
+  comunidad?: string;
+  latitud?: number;
+  longitud?: number;
+  estado: EstadoIncidente;
+  /** ALERTA_OFICIAL exige ademas el permiso INC_ALERTA. */
+  verificacion: VerificacionIncidente;
+  /** ISO 8601. Sin ella, el momento del alta. */
+  fechaReporte?: string;
+  instituciones?: string;
+  recomendaciones?: string;
+  /** Solo afectaciones ya verificadas. */
+  afectaciones?: string;
+}
+
+export interface IncidenteCreado {
+  id: string;
+  categoriaContenidoId: string;
+}
+
 /** Lo que la app usa de la respuesta del alta (el API devuelve la entidad entera). */
 export interface PublicacionCreada {
   id: string;
