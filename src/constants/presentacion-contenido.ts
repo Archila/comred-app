@@ -16,6 +16,7 @@ import {
   FileText,
   Flame,
   GraduationCap,
+  HandHeart,
   HardHat,
   HeartPulse,
   Inbox,
@@ -150,6 +151,7 @@ const ICONOS: Record<string, LucideIcon> = {
   'file-text': FileText,
   flame: Flame,
   'graduation-cap': GraduationCap,
+  'hand-heart': HandHeart,
   'hard-hat': HardHat,
   'heart-pulse': HeartPulse,
   leaf: Leaf,
@@ -196,6 +198,7 @@ const PALABRAS: [RegExp, LucideIcon][] = [
   [/rcp|reanimaci|auxilio/, HeartPulse],
   [/higiene|saneamiento|agua/, Droplets],
   [/evacua/, DoorOpen],
+  [/recupera/, HandHeart],
   [/mascota|perro|gato|veterinari/, PawPrint],
   [/vacuna/, Syringe],
   [/psicol/, Brain],
@@ -229,6 +232,35 @@ export function iconoDeCategoria(
 
   const nombre = normalizar(categoria.nombre);
   return PALABRAS.find(([patron]) => patron.test(nombre))?.[1] ?? porDefecto;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Foto fija de cada tipo de boletin                                           */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Los tipos de boletin (migracion `TiposBoletin` del API) llevan una foto
+ * FIJA, empaquetada en el binario: se ve sin red, es la misma en todas las
+ * municipalidades y no se cambia desde la app. Para poner la foto real basta
+ * con sustituir el archivo conservando el nombre.
+ *
+ * Llave: el nombre normalizado (sin tildes, en minusculas), igual que la
+ * busqueda de iconos.
+ */
+const PORTADAS_FIJAS: Partial<Record<SeccionContenido, Record<string, number>>> = {
+  BOLETINES: {
+    'preparacion ante emergencias': require('@/assets/images/boletines/preparacion-ante-emergencias.jpeg'),
+    'primeros auxilios y salud': require('@/assets/images/boletines/primeros-auxilios-y-salud.jpeg'),
+    'prevencion de desastres naturales': require('@/assets/images/boletines/prevencion-de-desastres-naturales.jpeg'),
+    'prevencion de incendios': require('@/assets/images/boletines/prevencion-de-incendios.jpeg'),
+    'seguridad vial y comunitaria': require('@/assets/images/boletines/seguridad-vial-y-comunitaria.jpeg'),
+    'recuperacion despues de desastres': require('@/assets/images/boletines/recuperacion-despues-de-desastres.jpeg'),
+  },
+};
+
+/** La foto fija de una tarjeta, o `undefined` si la suya es la de `portadaUrl`. */
+export function portadaFijaDe(categoria: Pick<CategoriaContenido, 'seccion' | 'nombre'>): number | undefined {
+  return PORTADAS_FIJAS[categoria.seccion]?.[normalizar(categoria.nombre).trim()];
 }
 
 /** Icono del estado vacio de una tarjeta sin publicaciones. */

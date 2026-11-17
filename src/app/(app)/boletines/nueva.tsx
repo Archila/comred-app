@@ -1,5 +1,5 @@
-import { PantallaNuevaPublicacion } from '@/components';
+import { PantallaNuevoBoletin } from '@/components';
 
 export default function NuevaBoletinesScreen() {
-  return <PantallaNuevaPublicacion seccion="BOLETINES" />;
+  return <PantallaNuevoBoletin />;
 }

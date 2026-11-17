@@ -41,12 +41,14 @@ export function BotonNuevaPublicacion({
   if (!puedeCrear) return null;
 
   const abrir = () => router.push(rutaNueva(seccion, categoriaId));
+  // En Boletines el formulario es el de boletin (foto + PDF): que el boton lo diga.
+  const etiqueta = seccion === 'BOLETINES' ? 'Nuevo boletín' : 'Nueva publicación';
 
   if (forma === 'cabecera') {
     return (
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Nueva publicación"
+        accessibilityLabel={etiqueta}
         hitSlop={8}
         onPress={abrir}
         className="h-9 w-9 items-center justify-center rounded-full bg-primary-500 active:bg-primary-600"
@@ -58,7 +60,7 @@ export function BotonNuevaPublicacion({
 
   return (
     <Button
-      label="Nueva publicación"
+      label={etiqueta}
       icon={Plus}
       variant={variante}
       size="lg"

@@ -38,7 +38,10 @@ export function SeccionStack({ seccion }: { seccion: SeccionConVisor }) {
         sesion estando en ella, se vuelve a las tarjetas.
       */}
       <Stack.Protected guard={puedeCrear}>
-        <Stack.Screen name="nueva" options={{ title: 'Nueva publicación' }} />
+        <Stack.Screen
+          name="nueva"
+          options={{ title: seccion === 'BOLETINES' ? 'Nuevo boletín' : 'Nueva publicación' }}
+        />
         {seccion === 'REPORTES' && (
           <Stack.Screen name="reportar" options={{ title: 'Reportar desastre' }} />
         )}

@@ -1,9 +1,9 @@
 import {
   CalendarClock,
   CalendarDays,
-  ChevronRight,
   ClipboardList,
   Clock,
+  Download,
   FileText,
   Hourglass,
   Flag,
@@ -36,6 +36,7 @@ import {
   abrirUbicacion,
   compartirPublicacion,
   comunidadDe,
+  descargarDocumento,
   diasDe,
   entidadDe,
   ubicacionDe,
@@ -258,20 +259,36 @@ function Contenido({ publicacion }: { publicacion: Publicacion }) {
       {documentos.length > 0 && (
         <Bloque titulo="Documentos" icono={FileText}>
           <View className="gap-2">
-            {documentos.map((documento) => (
-              <Pressable
-                key={documento.id}
-                accessibilityRole="link"
-                onPress={() => void abrirDocumento(documento.url)}
-                className="flex-row items-center gap-3 rounded-field border border-line p-3 active:bg-surface-sunken dark:border-line-dark dark:active:bg-surface-dark-muted"
-              >
-                <Icon as={FileText} size={20} className="text-primary-500" />
-                <Text variant="body" className="flex-1" numberOfLines={2}>
-                  {documento.titulo ?? 'Documento adjunto'}
-                </Text>
-                <Icon as={ChevronRight} size={18} className="text-content-subtle" />
-              </Pressable>
-            ))}
+            {documentos.map((documento) => {
+              const nombre = documento.titulo ?? 'Documento adjunto';
+              return (
+                // Tocar la fila lo abre para leerlo; el boton lo guarda en el telefono.
+                <Pressable
+                  key={documento.id}
+                  accessibilityRole="link"
+                  accessibilityLabel={`Abrir ${nombre}`}
+                  onPress={() => void abrirDocumento(documento.url)}
+                  className="flex-row items-center gap-3 rounded-field border border-line p-3 active:bg-surface-sunken dark:border-line-dark dark:active:bg-surface-dark-muted"
+                >
+                  <Icon as={FileText} size={20} className="text-primary-500" />
+                  <Text variant="body" className="flex-1" numberOfLines={2}>
+                    {nombre}
+                  </Text>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`Descargar ${nombre}`}
+                    hitSlop={6}
+                    onPress={() => void descargarDocumento(documento.url)}
+                    className="h-9 flex-row items-center gap-1.5 rounded-full bg-primary-500 px-3 active:bg-primary-600"
+                  >
+                    <Icon as={Download} size={16} className="text-primary-foreground dark:text-primary-foreground" />
+                    <Text variant="plain" className="text-sm font-semibold text-primary-foreground">
+                      Descargar
+                    </Text>
+                  </Pressable>
+                </Pressable>
+              );
+            })}
           </View>
         </Bloque>
       )}

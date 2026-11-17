@@ -9,7 +9,7 @@ import { useBrandColors } from '@/store';
 
 import { Button } from './button';
 import { Icon } from './icon';
-import { proximaHora, type SelectorFechaProps } from './selector-fecha.comun';
+import { fechaInicial, type SelectorFechaProps } from './selector-fecha.comun';
 import { Text } from './text';
 
 export { proximaHora, type SelectorFechaProps } from './selector-fecha.comun';
@@ -25,6 +25,7 @@ export function SelectorFecha({
   valor,
   onCambiar,
   minimo,
+  maximo,
   placeholder,
   error,
   deshabilitado = false,
@@ -32,7 +33,7 @@ export function SelectorFecha({
   const scheme = useColorScheme();
   const brand = useBrandColors();
   const [abiertoIos, setAbiertoIos] = useState(false);
-  const inicial = valor ?? proximaHora(minimo);
+  const inicial = fechaInicial(valor, minimo, maximo);
 
   function abrir() {
     if (Platform.OS === 'android') {
@@ -40,6 +41,7 @@ export function SelectorFecha({
         value: inicial,
         mode: 'date',
         minimumDate: minimo,
+        maximumDate: maximo,
         onValueChange: (_evento, fecha) =>
           DateTimePickerAndroid.open({
             value: fecha,
@@ -86,6 +88,7 @@ export function SelectorFecha({
             display="inline"
             locale="es-GT"
             minimumDate={minimo}
+            maximumDate={maximo}
             themeVariant={scheme === 'dark' ? 'dark' : 'light'}
             accentColor={brand.primary}
             onValueChange={(_evento, fecha) => onCambiar(fecha)}

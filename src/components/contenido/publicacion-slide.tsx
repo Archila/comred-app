@@ -1,7 +1,7 @@
 import {
   CalendarClock,
   CalendarDays,
-  FileText,
+  Download,
   Landmark,
   Lock,
   MapPin,
@@ -18,11 +18,11 @@ import type { Publicacion } from '@/models';
 import { Icon } from '../ui/icon';
 import { Text } from '../ui/text';
 import {
-  abrirDocumento,
   abrirUbicacion,
   compartirPublicacion,
   comunidadDe,
   cuandoEs,
+  descargarDocumento,
   entidadDe,
   ubicacionDe,
 } from './acciones';
@@ -177,6 +177,30 @@ export const PublicacionSlide = memo(function PublicacionSlide({
             </Text>
           </Pressable>
 
+          {/* El adjunto es lo que se viene a buscar en un boletin: boton con texto, no solo icono. */}
+          {documentos.length > 0 && (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={
+                documentos.length === 1
+                  ? `Descargar ${documentos[0].titulo ?? 'documento adjunto'}`
+                  : 'Ver los documentos para descargar'
+              }
+              // Con uno solo se descarga directo; con varios, la lista del detalle.
+              onPress={() =>
+                documentos.length === 1
+                  ? void descargarDocumento(documentos[0].url)
+                  : onVerMas(publicacion)
+              }
+              className="h-10 flex-row items-center gap-1.5 rounded-full bg-primary-500 px-4 active:bg-primary-600"
+            >
+              <Icon as={Download} size={16} className="text-primary-foreground dark:text-primary-foreground" />
+              <Text variant="plain" className="text-sm font-semibold text-primary-foreground">
+                {documentos.length === 1 ? 'Descargar' : `Descargar (${documentos.length})`}
+              </Text>
+            </Pressable>
+          )}
+
           <Accion
             icono={Share2}
             etiqueta="Compartir"
@@ -188,18 +212,6 @@ export const PublicacionSlide = memo(function PublicacionSlide({
               etiqueta="Ver ubicación en el mapa"
               onPress={() =>
                 void abrirUbicacion(ubicacion.latitud, ubicacion.longitud, ubicacion.etiqueta)
-              }
-            />
-          )}
-          {documentos.length > 0 && (
-            <Accion
-              icono={FileText}
-              etiqueta="Abrir documento"
-              // Con uno solo se abre directo; con varios, la lista del detalle.
-              onPress={() =>
-                documentos.length === 1
-                  ? void abrirDocumento(documentos[0].url)
-                  : onVerMas(publicacion)
               }
             />
           )}

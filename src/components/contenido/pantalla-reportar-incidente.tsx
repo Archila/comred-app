@@ -16,10 +16,9 @@ import {
   Trash,
   TriangleAlert,
   Type,
-  type LucideIcon,
 } from 'lucide-react-native';
 import { useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 
 import {
   ESTADO_INCIDENTE,
@@ -37,7 +36,6 @@ import { useMiUbicacion } from '@/hooks/use-mi-ubicacion';
 import {
   MAX_IMAGENES_PUBLICACION,
   MAX_MB_IMAGEN,
-  cn,
   comprimirImagen,
   elegirImagenes,
   formatNumber,
@@ -57,7 +55,6 @@ import { LoadingScreen } from '../feedback/loading-screen';
 import { Screen } from '../layout/screen';
 import { Button } from '../ui/button';
 import { Card } from '../ui/card';
-import { Icon } from '../ui/icon';
 import { Input } from '../ui/input';
 import { SelectorFecha } from '../ui/selector-fecha';
 import { Text } from '../ui/text';
@@ -67,6 +64,7 @@ import {
   Interruptor,
   MensajeError,
   Miniaturas,
+  OpcionMosaico,
   OpcionRadio,
   TituloBloque,
   ZonaSeleccion,
@@ -333,7 +331,7 @@ function Formulario({ tipos }: { tipos: CategoriaContenido[] }) {
         >
           <View className="flex-row flex-wrap justify-between gap-y-3">
             {tipos.map((opcion) => (
-              <TipoDesastre
+              <OpcionMosaico
                 key={opcion.id}
                 nombre={opcion.nombre}
                 icono={iconoDeCategoria(opcion, PRESENTACION_SECCION.REPORTES.icono)}
@@ -606,57 +604,5 @@ function Formulario({ tipos }: { tipos: CategoriaContenido[] }) {
         />
       </View>
     </Screen>
-  );
-}
-
-/** Mosaico de un tipo de desastre: dos por fila, con su icono. */
-function TipoDesastre({
-  nombre,
-  icono,
-  seleccionado,
-  deshabilitado,
-  onPress,
-}: {
-  nombre: string;
-  icono: LucideIcon;
-  seleccionado: boolean;
-  deshabilitado: boolean;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      accessibilityRole="radio"
-      accessibilityState={{ selected: seleccionado, disabled: deshabilitado }}
-      disabled={deshabilitado}
-      onPress={onPress}
-      style={{ width: '48.5%' }}
-      className={cn(
-        'min-h-28 items-center justify-center gap-2 rounded-card border-2 p-3',
-        seleccionado
-          ? 'border-primary-500 bg-primary-50 dark:bg-primary-950'
-          : 'border-line bg-surface dark:border-line-dark dark:bg-surface-dark',
-        deshabilitado && !seleccionado && 'opacity-50',
-      )}
-    >
-      <View
-        className={cn(
-          'h-12 w-12 items-center justify-center rounded-full',
-          seleccionado ? 'bg-primary-500' : 'bg-surface-sunken dark:bg-surface-dark-sunken',
-        )}
-      >
-        <Icon
-          as={icono}
-          size={24}
-          className={
-            seleccionado
-              ? 'text-primary-foreground dark:text-primary-foreground'
-              : 'text-primary-500 dark:text-primary-500'
-          }
-        />
-      </View>
-      <Text variant="body" className="text-center text-sm font-semibold" numberOfLines={2}>
-        {nombre}
-      </Text>
-    </Pressable>
   );
 }

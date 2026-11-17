@@ -196,6 +196,23 @@ export interface ImagenComprimida {
   alto: number;
 }
 
+/**
+ * Un PDF elegido en el telefono, listo para subir. Como la foto, vive en el
+ * aparato hasta que se publica.
+ */
+export interface DocumentoElegido {
+  /** Unico mientras dura el formulario. Sirve para no resubirlo al reintentar. */
+  id: string;
+  /** Archivo local (copia en cache) o, en web, un object URL. */
+  uri: string;
+  /** Nombre original: es el que la app muestra al descargarlo. */
+  nombre: string;
+  /** Bytes. `null` si el sistema no lo informa. */
+  tamano: number | null;
+  /** En web, el archivo tal cual: se adjunta sin volver a leerlo. */
+  archivoWeb?: Blob;
+}
+
 /** Lo que devuelve `POST /storage/upload-multiple/:categoria` por cada archivo. */
 export interface ArchivoSubido {
   fileName: string;
@@ -241,8 +258,11 @@ export interface CrearPublicacionPayload {
   fechaPublicacion?: string;
   /** ISO 8601. Sin ella no vence. */
   fechaExpiracion?: string;
-  /** En el orden del carrusel: la primera es la portada. */
-  media: { tipo: 'IMAGEN'; url: string; titulo?: string }[];
+  /**
+   * En el orden del carrusel: la primera imagen es la portada. Los documentos
+   * no entran en el carrusel; la app los ofrece para descargar.
+   */
+  media: { tipo: 'IMAGEN' | 'DOCUMENTO'; url: string; titulo?: string }[];
 }
 
 /** Cuerpo de `POST /comred/contenido/incidentes`. Espejo de `CreateIncidenteDto`. */

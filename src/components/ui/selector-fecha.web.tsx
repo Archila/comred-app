@@ -23,6 +23,7 @@ export function SelectorFecha({
   valor,
   onCambiar,
   minimo,
+  maximo,
   placeholder,
   error,
   deshabilitado = false,
@@ -37,6 +38,7 @@ export function SelectorFecha({
         'aria-label': placeholder,
         value: valor ? aLocal(valor) : '',
         min: minimo ? aLocal(minimo) : undefined,
+        max: maximo ? aLocal(maximo) : undefined,
         disabled: deshabilitado,
         onChange: (evento: { target: { value: string } }) => {
           const texto = evento.target.value;

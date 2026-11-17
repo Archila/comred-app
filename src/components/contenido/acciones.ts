@@ -103,3 +103,20 @@ export async function abrirDocumento(url: string): Promise<void> {
   const destino = resolveAssetUrl(url);
   if (destino) await Linking.openURL(destino).catch(() => undefined);
 }
+
+/**
+ * Descarga un documento adjunto: el navegador del telefono lo guarda en
+ * Descargas y avisa al terminar, sin abrirlo.
+ *
+ * Lo pide el API con `?descargar=1` (`Content-Disposition: attachment`). Solo
+ * se anade a los archivos del modulo storage: a una URL ajena no se le puede
+ * pedir eso, y se abre tal cual.
+ */
+export async function descargarDocumento(url: string): Promise<void> {
+  const destino = resolveAssetUrl(url);
+  if (!destino) return;
+
+  const propio = !/^https?:/i.test(url.trim());
+  const final = propio ? `${destino}${destino.includes('?') ? '&' : '?'}descargar=1` : destino;
+  await Linking.openURL(final).catch(() => undefined);
+}

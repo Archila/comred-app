@@ -15,6 +15,7 @@ import { ActivityIndicator, FlatList, Pressable, RefreshControl, View } from 're
 import {
   PRESENTACION_SECCION,
   iconoDeCategoria,
+  portadaFijaDe,
   type PresentacionSeccion,
   type SeccionConVisor,
 } from '@/constants';
@@ -91,7 +92,12 @@ export function PantallaCategorias({ seccion }: { seccion: SeccionConVisor }) {
         // Solo para administradores; a los demas no les ocupa sitio.
         ListHeaderComponent={
           puedeCrear ? (
-            <AccionesAdministrador seccion={seccion} errorPortada={portada.errorMessage} />
+            <AccionesAdministrador
+              seccion={seccion}
+              errorPortada={portada.errorMessage}
+              // Si todas las fotos son fijas (Boletines), no hay camara que explicar.
+              conCamara={categorias.data.some((categoria) => !portadaFijaDe(categoria))}
+            />
           ) : undefined
         }
         renderItem={({ item }) => (
@@ -101,7 +107,9 @@ export function PantallaCategorias({ seccion }: { seccion: SeccionConVisor }) {
             alto={altoTarjeta}
             marca={marcas[item.id]}
             onPress={() => router.push(`/${presentacion.slug}/${item.id}` as Href)}
-            onCambiarPortada={puedeCrear ? () => portada.mutate(item.id) : undefined}
+            onCambiarPortada={
+              puedeCrear && !portadaFijaDe(item) ? () => portada.mutate(item.id) : undefined
+            }
             cambiandoPortada={portada.isPending && portada.variables === item.id}
             ocupado={portada.isPending}
           />
@@ -168,9 +176,11 @@ function TituloSeccion({ presentacion }: { presentacion: PresentacionSeccion }) 
 function AccionesAdministrador({
   seccion,
   errorPortada,
+  conCamara,
 }: {
   seccion: SeccionConVisor;
   errorPortada: string | null;
+  conCamara: boolean;
 }) {
   const router = useRouter();
 
@@ -189,9 +199,11 @@ function AccionesAdministrador({
         seccion={seccion}
         variante={seccion === 'REPORTES' ? 'outline' : 'primary'}
       />
-      <Text variant="caption" className="text-center">
-        Toca la cámara de una tarjeta para cambiar su fotografía.
-      </Text>
+      {conCamara && (
+        <Text variant="caption" className="text-center">
+          Toca la cámara de una tarjeta para cambiar su fotografía.
+        </Text>
+      )}
       {errorPortada && (
         <Text variant="error" className="text-center">
           {errorPortada}
@@ -302,7 +314,10 @@ function Tarjeta({
   /** Otra tarjeta esta cambiando su foto: una a la vez. */
   ocupado?: boolean;
 }) {
-  const portada = resolveAssetUrl(categoria.portadaUrl);
+  // La foto fija (tipos de boletin) manda sobre la que se haya subido.
+  const fija = portadaFijaDe(categoria);
+  const remota = resolveAssetUrl(categoria.portadaUrl);
+  const portada = fija ?? (remota ? { uri: remota } : undefined);
   const icono = iconoDeCategoria(categoria, presentacion.icono);
   const brand = useBrandColors();
 
@@ -317,7 +332,7 @@ function Tarjeta({
     >
       {portada ? (
         <Image
-          source={{ uri: portada }}
+          source={portada}
           style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 }}
           contentFit="cover"
           transition={200}

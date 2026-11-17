@@ -1,6 +1,7 @@
 export * from './use-bandeja';
 export * from './use-contenido';
 export * from './use-cambiar-portada';
+export * from './use-crear-boletin';
 export * from './use-crear-publicacion';
 export * from './use-reportar-incidente';
 export * from './use-mapa';

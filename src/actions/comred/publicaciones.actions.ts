@@ -1,9 +1,10 @@
 import { api } from '@/api';
 import { ENDPOINTS } from '@/constants';
-import { adjuntarImagen } from '@/lib';
+import { adjuntarDocumento, adjuntarImagen } from '@/lib';
 import type {
   ArchivoSubido,
   CrearPublicacionPayload,
+  DocumentoElegido,
   ImagenComprimida,
   PublicacionCreada,
 } from '@/models';
@@ -27,9 +28,24 @@ export const publicacionesActions = {
    * minuto. Devuelve los archivos en el mismo orden en que se enviaron.
    */
   async subirImagenes(imagenes: ImagenComprimida[]): Promise<ArchivoSubido[]> {
+    return publicacionesActions.subirArchivos(imagenes, []);
+  },
+
+  /**
+   * `POST /storage/upload-multiple/publicacion` con fotos y PDF juntos (un
+   * boletin): sigue siendo UNA peticion frente al throttle. Devuelve primero
+   * las imagenes y despues los documentos, cada grupo en su orden.
+   */
+  async subirArchivos(
+    imagenes: ImagenComprimida[],
+    documentos: DocumentoElegido[],
+  ): Promise<ArchivoSubido[]> {
     const formulario = new FormData();
     for (const [indice, imagen] of imagenes.entries()) {
       await adjuntarImagen(formulario, 'files', imagen, `publicacion-${indice + 1}.jpg`);
+    }
+    for (const documento of documentos) {
+      await adjuntarDocumento(formulario, 'files', documento);
     }
 
     const response = await api.upload<ArchivoSubido[]>(
