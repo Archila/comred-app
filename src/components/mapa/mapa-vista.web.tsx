@@ -14,13 +14,16 @@ import { View } from 'react-native';
 import { CAJA_MUNICIPIO, MAPA_CONFIG } from '@/constants';
 
 import {
+  AREA_MIN_ETIQUETA_KM2,
   CAPA_LIMITE,
   CAPAS_TOCABLES,
   capasDeElementos,
   FUENTE_ELEMENTOS,
+  FUENTE_ETIQUETAS,
   FUENTE_LIMITE,
   MARGEN_ENCUADRE,
 } from './estilos-capas';
+import { etiquetasDeAreas } from './etiquetas';
 import { PinMarcador } from './pin-marcador';
 import { MARGEN_TOQUE_MARCADOR_MS, puntosVisibles } from './puntos';
 import type { MapaVistaProps } from './tipos';
@@ -150,6 +153,7 @@ export function MapaVista({
 
       instancia.on('load', () => {
         instancia.addSource(FUENTE_ELEMENTOS, { type: 'geojson', data: COLECCION_VACIA });
+        instancia.addSource(FUENTE_ETIQUETAS, { type: 'geojson', data: COLECCION_VACIA });
         instancia.addSource(FUENTE_LIMITE, { type: 'geojson', data: COLECCION_VACIA });
         for (const capa of capasDeElementos([], null)) instancia.addLayer(aGl(capa));
         instancia.addLayer(aGl(CAPA_LIMITE));
@@ -192,6 +196,9 @@ export function MapaVista({
     const instancia = mapa.current;
     if (!listo || !instancia) return;
     (instancia.getSource(FUENTE_ELEMENTOS) as GeoJSONSource | undefined)?.setData(capas.elementos);
+    (instancia.getSource(FUENTE_ETIQUETAS) as GeoJSONSource | undefined)?.setData(
+      etiquetasDeAreas(capas, AREA_MIN_ETIQUETA_KM2),
+    );
     (instancia.getSource(FUENTE_LIMITE) as GeoJSONSource | undefined)?.setData(
       capas.limite ?? COLECCION_VACIA,
     );

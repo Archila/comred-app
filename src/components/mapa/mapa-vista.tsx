@@ -12,12 +12,15 @@ import { useImperativeHandle, useMemo, useRef } from 'react';
 import { CAJA_MUNICIPIO, MAPA_CONFIG } from '@/constants';
 
 import {
+  AREA_MIN_ETIQUETA_KM2,
   CAPA_LIMITE,
   capasDeElementos,
   FUENTE_ELEMENTOS,
+  FUENTE_ETIQUETAS,
   FUENTE_LIMITE,
   MARGEN_ENCUADRE,
 } from './estilos-capas';
+import { etiquetasDeAreas } from './etiquetas';
 import { PinMarcador } from './pin-marcador';
 import { MARGEN_TOQUE_MARCADOR_MS, puntosVisibles } from './puntos';
 import type { MapaVistaProps } from './tipos';
@@ -65,6 +68,8 @@ export function MapaVista({
     () => capasDeElementos(categoriasActivas, seleccionadoId),
     [categoriasActivas, seleccionadoId],
   );
+
+  const etiquetas = useMemo(() => etiquetasDeAreas(capas, AREA_MIN_ETIQUETA_KM2), [capas]);
 
   const puntos = useMemo(
     () => puntosVisibles(capas, categoriasActivas),
@@ -120,9 +125,19 @@ export function MapaVista({
           if (typeof id === 'string') seleccionarDesdeMarcador(id);
         }}
       >
-        {capasEstilo.map((capa) => (
-          <Layer key={capa.id} {...capa} />
-        ))}
+        {capasEstilo
+          .filter((capa) => 'source' in capa && capa.source === FUENTE_ELEMENTOS)
+          .map((capa) => (
+            <Layer key={capa.id} {...capa} />
+          ))}
+      </GeoJSONSource>
+
+      <GeoJSONSource id={FUENTE_ETIQUETAS} data={etiquetas}>
+        {capasEstilo
+          .filter((capa) => 'source' in capa && capa.source === FUENTE_ETIQUETAS)
+          .map((capa) => (
+            <Layer key={capa.id} {...capa} />
+          ))}
       </GeoJSONSource>
 
       {capas.limite && (

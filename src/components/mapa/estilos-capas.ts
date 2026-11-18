@@ -14,10 +14,9 @@ import type { TipoGeometria } from '@/models';
  * carga el paquete nativo.)
  *
  * El color y la opacidad salen de los atributos de cada figura (`color`,
- * `opacidad`), que pone el API: el color es el de su capa, y la opacidad de un
- * area sale de su categoria de amenaza (1-6, mas intensa cuanto mas alta) o,
- * si no la tiene, de la capa. Filtrar o resaltar no exige volver
- * a cargar la fuente: solo cambia el `filter` de la capa.
+ * `opacidad`), que pone el API segun su capa y su nivel de amenaza (1-6). Se
+ * ajustan en `config/estilos-mapa.json` del API, no aqui. Filtrar o resaltar
+ * no exige volver a cargar la fuente: solo cambia el `filter` de la capa.
  *
  * Se filtra por `tipoGeometria` (atributo del API) y no por la expresion
  * `geometry-type`: esta devuelve "Polygon" o "MultiPolygon" segun la version
@@ -25,6 +24,8 @@ import type { TipoGeometria } from '@/models';
  */
 
 export const FUENTE_ELEMENTOS = 'mapa-elementos';
+/** Un fragmento por figura, con su superficie: ver `etiquetas.ts`. */
+export const FUENTE_ETIQUETAS = 'mapa-etiquetas';
 export const FUENTE_LIMITE = 'mapa-limite';
 
 export const CAPA = {
@@ -42,6 +43,65 @@ export const CAPAS_TOCABLES: string[] = [CAPA.areaRelleno, CAPA.linea, CAPA.punt
 
 /** Zoom desde el que se rotulan las areas: antes se pisan entre si. */
 const ZOOM_ETIQUETAS = 13;
+
+/**
+ * DENSIDAD DE LAS ETIQUETAS. Un fragmento de area se rotula solo si en
+ * pantalla ocupa al menos esto (px², unos 63 × 63): el rotulo mide ~110 × 30,
+ * y en algo mas chico tapa la figura en vez de nombrarla. Mas alto, menos
+ * etiquetas; mas bajo, mas.
+ */
+const AREA_MIN_ETIQUETA_PX2 = 4000;
+
+/**
+ * Espacio libre alrededor de cada rotulo (px). Dos rotulos que se acerquen a
+ * menos de esto no salen los dos: queda el del fragmento mas grande.
+ */
+const SEPARACION_ETIQUETAS_PX = 24;
+
+/**
+ * Km² que ocupa un pixel² a un zoom, en la latitud del municipio. MapLibre
+ * usa teselas de 512 px: a zoom 0 el ecuador mide 512 px.
+ */
+function km2PorPixel2(zoom: number): number {
+  const latitud = (MAPA_CONFIG.centro.latitud * Math.PI) / 180;
+  const kmPorPixel = (40075.016686 * Math.cos(latitud)) / (512 * 2 ** zoom);
+  return kmPorPixel ** 2;
+}
+
+/** Superficie minima (km²) de un fragmento para rotularlo a un zoom. */
+function areaMinimaKm2(zoom: number): number {
+  return AREA_MIN_ETIQUETA_PX2 * km2PorPixel2(zoom);
+}
+
+/**
+ * Lo mas chico que se llega a rotular (al zoom maximo): lo de debajo ni
+ * entra en la fuente de etiquetas.
+ */
+export const AREA_MIN_ETIQUETA_KM2 = areaMinimaKm2(MAPA_CONFIG.zoomMax);
+
+/**
+ * Filtro de tamano por zoom: `step` sobre el zoom con un umbral por cada
+ * nivel entero (los filtros solo evaluan el zoom en enteros). Al acercarse un
+ * nivel, cada fragmento se ve 4 veces mas grande y el umbral baja a la cuarta
+ * parte.
+ */
+function filtroTamanoEtiqueta(): FilterSpecification {
+  const condicion = (zoom: number) => ['>=', ['get', 'areaKm2'], areaMinimaKm2(zoom)];
+  const pasos: unknown[] = ['step', ['zoom'], condicion(ZOOM_ETIQUETAS)];
+  for (let zoom = ZOOM_ETIQUETAS + 1; zoom <= MAPA_CONFIG.zoomMax; zoom++) {
+    pasos.push(zoom, condicion(zoom));
+  }
+  return pasos as FilterSpecification;
+}
+
+/** Etiquetas de las capas encendidas, de fragmentos que se vean grandes. */
+function filtroEtiquetas(activas: string[]): FilterSpecification {
+  return [
+    'all',
+    ['in', ['get', 'categoriaId'], ['literal', activas]],
+    filtroTamanoEtiqueta(),
+  ] as FilterSpecification;
+}
 
 /** Margen al encuadrar, para que la figura no quede bajo la ficha. */
 export const MARGEN_ENCUADRE = { top: 64, right: 48, bottom: 200, left: 48 };
@@ -106,14 +166,17 @@ export function capasDeElementos(
     {
       id: CAPA.etiqueta,
       type: 'symbol',
-      source: FUENTE_ELEMENTOS,
+      source: FUENTE_ETIQUETAS,
       minzoom: ZOOM_ETIQUETAS,
-      filter: filtroDe('AREA', activas),
+      filter: filtroEtiquetas(activas),
       layout: {
         'text-field': ['get', 'nombre'],
         'text-font': [MAPA_CONFIG.fuenteEtiquetas],
         'text-size': 12,
         'text-max-width': 8,
+        'text-padding': SEPARACION_ETIQUETAS_PX,
+        // Primero (y con prioridad en los choques) los fragmentos grandes.
+        'symbol-sort-key': ['-', 0, ['get', 'areaKm2']],
       },
       paint: {
         'text-color': '#1F2937',
