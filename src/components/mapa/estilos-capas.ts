@@ -14,7 +14,9 @@ import type { TipoGeometria } from '@/models';
  * carga el paquete nativo.)
  *
  * El color y la opacidad salen de los atributos de cada figura (`color`,
- * `opacidad`), que el API copia de su capa. Filtrar o resaltar no exige volver
+ * `opacidad`), que pone el API: el color es el de su capa, y la opacidad de un
+ * area sale de su categoria de amenaza (1-6, mas intensa cuanto mas alta) o,
+ * si no la tiene, de la capa. Filtrar o resaltar no exige volver
  * a cargar la fuente: solo cambia el `filter` de la capa.
  *
  * Se filtra por `tipoGeometria` (atributo del API) y no por la expresion

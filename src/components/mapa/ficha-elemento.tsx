@@ -4,7 +4,7 @@ import { Navigation, Newspaper, Phone, X } from 'lucide-react-native';
 import { ActivityIndicator, Linking, Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ESTADO_ELEMENTO, iconoDeCapa } from '@/constants';
+import { CATEGORIA_RIESGO, ESTADO_ELEMENTO, iconoDeCapa } from '@/constants';
 import { useElementoGeografico } from '@/hooks';
 import { formatDate, formatDateOnly, formatNumber, resolveAssetUrl } from '@/lib';
 import type { Bbox, VinculoElemento } from '@/models';
@@ -47,6 +47,9 @@ export function FichaElemento({
   const { data: elemento, isLoading, error, refetch } = useElementoGeografico(id);
 
   const estado = elemento?.estado ? ESTADO_ELEMENTO[elemento.estado] : null;
+  const categoriaRiesgo = elemento?.categoriaRiesgo
+    ? CATEGORIA_RIESGO[elemento.categoriaRiesgo]
+    : null;
   const foto = resolveAssetUrl(elemento?.fotoUrl);
   const detalles = elemento
     ? [
@@ -99,7 +102,12 @@ export function FichaElemento({
           <Text variant="heading" className="pr-10">
             {elemento.nombre}
           </Text>
-          {estado && <Insignia {...estado} />}
+          {(estado || categoriaRiesgo) && (
+            <View className="flex-row flex-wrap gap-2">
+              {categoriaRiesgo && <Insignia {...categoriaRiesgo} />}
+              {estado && <Insignia {...estado} />}
+            </View>
+          )}
 
           {foto && (
             <Image

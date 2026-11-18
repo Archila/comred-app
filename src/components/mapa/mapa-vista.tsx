@@ -9,7 +9,7 @@ import {
 } from '@maplibre/maplibre-react-native';
 import { useImperativeHandle, useMemo, useRef } from 'react';
 
-import { MAPA_CONFIG } from '@/constants';
+import { CAJA_MUNICIPIO, MAPA_CONFIG } from '@/constants';
 
 import {
   CAPA_LIMITE,
@@ -90,10 +90,22 @@ export function MapaVista({
     >
       <Camera
         ref={camara}
-        initialViewState={{
-          center: [MAPA_CONFIG.centro.longitud, MAPA_CONFIG.centro.latitud],
-          zoom: MAPA_CONFIG.zoom,
-        }}
+        initialViewState={
+          CAJA_MUNICIPIO
+            ? {
+                bounds: [
+                  CAJA_MUNICIPIO.minLng,
+                  CAJA_MUNICIPIO.minLat,
+                  CAJA_MUNICIPIO.maxLng,
+                  CAJA_MUNICIPIO.maxLat,
+                ],
+                padding: MARGEN_ENCUADRE,
+              }
+            : {
+                center: [MAPA_CONFIG.centro.longitud, MAPA_CONFIG.centro.latitud],
+                zoom: MAPA_CONFIG.zoom,
+              }
+        }
         minZoom={MAPA_CONFIG.zoomMin}
         maxZoom={MAPA_CONFIG.zoomMax}
       />

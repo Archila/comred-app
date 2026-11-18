@@ -11,7 +11,7 @@ import { useEffect, useImperativeHandle, useRef, useState, type ComponentRef } f
 import { createRoot, type Root } from 'react-dom/client';
 import { View } from 'react-native';
 
-import { MAPA_CONFIG } from '@/constants';
+import { CAJA_MUNICIPIO, MAPA_CONFIG } from '@/constants';
 
 import {
   CAPA_LIMITE,
@@ -127,8 +127,18 @@ export function MapaVista({
       const instancia = new maplibregl.Map({
         container: elemento,
         style: MAPA_CONFIG.estiloUrl,
-        center: [MAPA_CONFIG.centro.longitud, MAPA_CONFIG.centro.latitud],
-        zoom: MAPA_CONFIG.zoom,
+        ...(CAJA_MUNICIPIO
+          ? {
+              bounds: [
+                [CAJA_MUNICIPIO.minLng, CAJA_MUNICIPIO.minLat],
+                [CAJA_MUNICIPIO.maxLng, CAJA_MUNICIPIO.maxLat],
+              ] as [[number, number], [number, number]],
+              fitBoundsOptions: { padding: MARGEN_ENCUADRE },
+            }
+          : {
+              center: [MAPA_CONFIG.centro.longitud, MAPA_CONFIG.centro.latitud] as [number, number],
+              zoom: MAPA_CONFIG.zoom,
+            }),
         minZoom: MAPA_CONFIG.zoomMin,
         maxZoom: MAPA_CONFIG.zoomMax,
         attributionControl: false,

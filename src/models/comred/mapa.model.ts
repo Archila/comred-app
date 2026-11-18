@@ -14,6 +14,12 @@ export type EstadoElementoGeografico =
   | 'ACTIVO'
   | 'CONTROLADO';
 
+/**
+ * Categoria de una zona de amenaza: 1 (Baja) a 6 (Muy alta). Las etiquetas
+ * viven en `CATEGORIA_RIESGO` (`constants/mapa.ts`).
+ */
+export type CategoriaRiesgo = 1 | 2 | 3 | 4 | 5 | 6;
+
 /** Una capa del mapa: "Albergues", "Zonas de inundacion". */
 export interface CapaMapa {
   id: string;
@@ -36,8 +42,10 @@ export interface PropiedadesFigura {
   categoriaId: string;
   nombre: string;
   estado: EstadoElementoGeografico | null;
+  categoriaRiesgo: CategoriaRiesgo | null;
   tipoGeometria: TipoGeometria;
   color: string;
+  /** Del relleno de un area. El API la calcula segun la categoria, o la toma de la capa. */
   opacidad: number;
 }
 
@@ -73,6 +81,7 @@ export interface ElementoGeograficoDetalle {
   nombre: string;
   descripcion: string | null;
   estado: EstadoElementoGeografico | null;
+  categoriaRiesgo: CategoriaRiesgo | null;
   tipoGeometria: TipoGeometria;
   latitud: number | null;
   longitud: number | null;

@@ -4,9 +4,8 @@ import { ActivityIndicator, Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getErrorMessage } from '@/api';
-import { MAPA_CONFIG } from '@/constants';
+import { CAJA_MUNICIPIO, LIMITE_MUNICIPAL, MAPA_CONFIG } from '@/constants';
 import { useCapasMapa, useMiUbicacion } from '@/hooks';
-import type { Bbox } from '@/models';
 import { useMapaStore } from '@/store';
 
 import { Icon } from '../ui/icon';
@@ -38,7 +37,12 @@ const ESPACIO_BOTON_MENU = 80;
 export function PantallaMapa() {
   const insets = useSafeAreaInsets();
   const { data, isFetching, error, refetch } = useCapasMapa();
-  const capas = data ?? CAPAS_VACIAS;
+  // El contorno que se dibuja es siempre el del archivo del build
+  // (`geo/limite_municipal.geojson`), no el que guarde el API.
+  const capas = useMemo(
+    () => ({ ...(data ?? CAPAS_VACIAS), limite: LIMITE_MUNICIPAL }),
+    [data],
+  );
 
   const cambios = useMapaStore((state) => state.cambios);
   const alternar = useMapaStore((state) => state.alternar);
@@ -59,10 +63,8 @@ export function PantallaMapa() {
   );
   const conjuntoActivas = useMemo(() => new Set(activas), [activas]);
 
-  const cajaLimite = useMemo(() => cajaDe(capas.limite), [capas.limite]);
-
   const recentrar = () => {
-    if (cajaLimite) vista.current?.encuadrar(cajaLimite);
+    if (CAJA_MUNICIPIO) vista.current?.encuadrar(CAJA_MUNICIPIO);
     else vista.current?.irA(MAPA_CONFIG.centro, MAPA_CONFIG.zoom);
   };
 
@@ -179,28 +181,4 @@ function BotonControl({
       {cargando ? <ActivityIndicator size="small" /> : <Icon as={icono} size={20} />}
     </Pressable>
   );
-}
-
-/** Caja del contorno del municipio, para "Recentrar". */
-function cajaDe(limite: GeoJSON.FeatureCollection | null): Bbox | null {
-  if (!limite) return null;
-
-  const caja = { minLat: Infinity, minLng: Infinity, maxLat: -Infinity, maxLng: -Infinity };
-  const recorrer = (valor: unknown) => {
-    if (!Array.isArray(valor)) return;
-    if (typeof valor[0] === 'number' && typeof valor[1] === 'number') {
-      const [lng, lat] = valor as number[];
-      caja.minLat = Math.min(caja.minLat, lat);
-      caja.minLng = Math.min(caja.minLng, lng);
-      caja.maxLat = Math.max(caja.maxLat, lat);
-      caja.maxLng = Math.max(caja.maxLng, lng);
-      return;
-    }
-    valor.forEach(recorrer);
-  };
-  for (const figura of limite.features) {
-    if (figura.geometry && 'coordinates' in figura.geometry) recorrer(figura.geometry.coordinates);
-  }
-
-  return Number.isFinite(caja.minLat) ? caja : null;
 }

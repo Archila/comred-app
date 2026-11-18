@@ -20,31 +20,53 @@ import {
   Waves,
   type LucideIcon,
 } from 'lucide-react-native';
+import type { FeatureCollection } from 'geojson';
 
 import paleta from '@/config/paleta';
-import type { EstadoElementoGeografico } from '@/models';
+import { cajaDe } from '@/lib/caja-geojson';
+import type { Bbox, CategoriaRiesgo, EstadoElementoGeografico } from '@/models';
+
+import limiteMunicipal from '../../geo/limite_municipal.geojson';
 
 import type { EstiloInsignia } from './presentacion-contenido';
+
+/**
+ * Contorno del municipio del build, leido de `geo/limite_municipal.geojson`.
+ *
+ * Para otro municipio basta reemplazar ese archivo por otro con el mismo
+ * nombre (un FeatureCollection en WGS84 / CRS84, lon-lat): el contorno que se
+ * dibuja, el encuadre inicial y el boton "Recentrar" salen de el. Tras
+ * cambiarlo, reiniciar Metro con `npx expo start -c` para que no quede en
+ * cache.
+ */
+export const LIMITE_MUNICIPAL: FeatureCollection = limiteMunicipal;
+
+/** Caja del contorno: es lo que encuadra el mapa al abrirse y al recentrar. */
+export const CAJA_MUNICIPIO: Bbox | null = cajaDe(LIMITE_MUNICIPAL);
+
+/** San Carlos Sija, por si el archivo del contorno viniera vacio. */
+const CENTRO_RESPALDO = { latitud: 15.078, longitud: -91.565 };
 
 /**
  * Configuracion del mapa general del municipio.
  *
  * SE CAMBIA EN CODIGO, junto con `version` de `app.json`: cada municipalidad
  * tiene su propio build, y donde arranca su mapa no es algo que el panel deba
- * poder mover. Al compilar la app de otro municipio, ajustar `centro` y
- * `zoom` aqui.
+ * poder mover. Al compilar la app de otro municipio, cambiar
+ * `geo/limite_municipal.geojson`: `centro` sale de su caja.
  *
- * Si la organizacion tiene contorno guardado (`PUT /comred/mapa/limite`), el
- * boton "Recentrar" encuadra el contorno; el arranque usa siempre esto, para
- * que el mapa no salte al llegar los datos.
+ * El arranque encuadra `CAJA_MUNICIPIO` (sin esperar al API, para que el mapa
+ * no salte al llegar los datos); `centro` y `zoom` solo se usan si el archivo
+ * no tuviera coordenadas.
  */
 export const MAPA_CONFIG = {
-  /**
-   * Quetzaltenango (MUNI-XELA, el build actual). Para San Carlos Sija:
-   * { latitud: 14.985, longitud: -91.55 }, zoom 12.
-   */
-  centro: { latitud: 14.8175, longitud: -91.5235 },
-  zoom: 12.5,
+  centro: CAJA_MUNICIPIO
+    ? {
+        latitud: (CAJA_MUNICIPIO.minLat + CAJA_MUNICIPIO.maxLat) / 2,
+        longitud: (CAJA_MUNICIPIO.minLng + CAJA_MUNICIPIO.maxLng) / 2,
+      }
+    : CENTRO_RESPALDO,
+  zoom: 10.5,
   zoomMin: 9,
   zoomMax: 18,
   /**
@@ -116,6 +138,20 @@ export function iconoDeCapa(capa: { icono: string | null; nombre: string }): Luc
   const nombre = normalizar(capa.nombre);
   return PALABRAS.find(([patron]) => patron.test(nombre))?.[1] ?? MapPin;
 }
+
+/**
+ * Categoria de amenaza de una zona, de 1 a 6 (6 la peor). Mismos nombres que
+ * `CATEGORIAS_RIESGO` del API. La intensidad del relleno en el mapa la manda
+ * el API en `opacidad`; aqui solo se rotula la ficha.
+ */
+export const CATEGORIA_RIESGO: Record<CategoriaRiesgo, EstiloInsignia> = {
+  1: { etiqueta: 'Categoría: Baja', fondo: 'bg-success-100', texto: 'text-success-700' },
+  2: { etiqueta: 'Categoría: Media baja', fondo: 'bg-success-100', texto: 'text-success-700' },
+  3: { etiqueta: 'Categoría: Media', fondo: 'bg-warning-100', texto: 'text-warning-700' },
+  4: { etiqueta: 'Categoría: Media alta', fondo: 'bg-warning-100', texto: 'text-warning-700' },
+  5: { etiqueta: 'Categoría: Alta', fondo: 'bg-danger-100', texto: 'text-danger-700' },
+  6: { etiqueta: 'Categoría: Muy alta', fondo: 'bg-danger-100', texto: 'text-danger-700' },
+};
 
 /** Plan Maestro 9.3: un albergue dice si esta habilitado, cerrado o pendiente. */
 export const ESTADO_ELEMENTO: Record<EstadoElementoGeografico, EstiloInsignia> = {
