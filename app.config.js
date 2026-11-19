@@ -42,8 +42,12 @@ function versionACodigo(version) {
  * COLORES
  * -------
  * Salen de `src/config/paleta.js`: el tema nativo (`userInterfaceStyle`, que
- * reemplaza al de `app.json`) y el fondo del splash. Solo se aplican al
- * recompilar (`npx expo prebuild` + `npx expo run:android`).
+ * reemplaza al de `app.json`), el fondo del splash y el del icono adaptativo
+ * de Android. Solo se aplican al recompilar (`npx expo prebuild` +
+ * `npx expo run:android`).
+ *
+ * Las imagenes del icono y del splash salen de `assets/images/icon.png` con
+ * `python -X utf8 scripts/generar-iconos.py`.
  */
 const paleta = require('./src/config/paleta');
 
@@ -64,7 +68,12 @@ module.exports = ({ config }) => {
   return {
     ...config,
     userInterfaceStyle: ESTILO_INTERFAZ[paleta.modo] ?? config.userInterfaceStyle,
-    android: { ...config.android, versionCode: codigo },
+    android: {
+      ...config.android,
+      versionCode: codigo,
+      // Fondo del icono adaptativo: el mismo azul del splash.
+      adaptiveIcon: { ...config.android?.adaptiveIcon, backgroundColor: paleta.marca.secundario },
+    },
     ios: { ...config.ios, buildNumber: String(codigo) },
     plugins: conFondoDeSplash(config.plugins),
   };

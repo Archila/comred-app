@@ -80,6 +80,8 @@ export interface IncidentePublico {
   recomendaciones: string | null;
   /** Solo afectaciones ya verificadas. */
   afectaciones: string | null;
+  /** Maquinaria, personal o insumos que se piden. Los API anteriores no la envian. */
+  solicitudApoyo?: string | null;
 }
 
 /** Una actividad con fecha y lugar. Sus publicaciones la anuncian y la cuentan. */
@@ -123,6 +125,11 @@ export interface ProyectoPublico {
   avance: number | null;
   latitud: number | null;
   longitud: number | null;
+  /** Los API anteriores no envian estos tres. */
+  trabajosRealizados?: string | null;
+  recomendaciones?: string | null;
+  /** De donde sale el dato ("Memoria de labores, pagina 51"). */
+  fuente?: string | null;
 }
 
 /** Una publicacion del visor. Es la misma forma para todas las secciones. */

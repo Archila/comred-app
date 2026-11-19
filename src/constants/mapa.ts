@@ -7,6 +7,7 @@ import {
   Hospital,
   House,
   Landmark,
+  Layers,
   MapPin,
   Mountain,
   Package,
@@ -103,6 +104,8 @@ const ICONOS: Record<string, LucideIcon> = {
   school: School,
   'building-2': Building2,
   landmark: Landmark,
+  layers: Layers,
+  suelos: Layers,
   package: Package,
   'shield-alert': ShieldAlert,
   'triangle-alert': TriangleAlert,
@@ -121,6 +124,7 @@ const PALABRAS: [RegExp, LucideIcon][] = [
   [/acopio/, Package],
   [/escuela|instituto/, School],
   [/municipal|edificio/, Landmark],
+  [/suelo/, Layers],
   [/riesgo|amenaza|susceptible/, ShieldAlert],
 ];
 

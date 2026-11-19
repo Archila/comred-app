@@ -5,6 +5,8 @@ import {
   Clock,
   Download,
   FileText,
+  Hammer,
+  HandHelping,
   Hourglass,
   Flag,
   Landmark,
@@ -225,10 +227,25 @@ function Contenido({ publicacion }: { publicacion: Publicacion }) {
         </>
       )}
 
-      {proyecto?.descripcion && proyecto.descripcion !== publicacion.descripcion && (
-        <Bloque titulo="Sobre el proyecto">
-          <Text variant="body">{proyecto.descripcion}</Text>
-        </Bloque>
+      {proyecto && (
+        <>
+          {proyecto.descripcion && proyecto.descripcion !== publicacion.descripcion && (
+            <Bloque titulo="Sobre el proyecto">
+              <Text variant="body">{proyecto.descripcion}</Text>
+            </Bloque>
+          )}
+          {proyecto.trabajosRealizados && (
+            <Bloque titulo="Trabajos realizados" icono={Hammer}>
+              <Text variant="body">{proyecto.trabajosRealizados}</Text>
+            </Bloque>
+          )}
+          {proyecto.recomendaciones && (
+            <Bloque titulo="Recomendaciones" icono={ShieldCheck}>
+              <Text variant="body">{proyecto.recomendaciones}</Text>
+            </Bloque>
+          )}
+          {proyecto.fuente && <Text variant="caption">Fuente: {proyecto.fuente}</Text>}
+        </>
       )}
 
       {incidente && (
@@ -251,6 +268,11 @@ function Contenido({ publicacion }: { publicacion: Publicacion }) {
           {incidente.instituciones && (
             <Bloque titulo="Instituciones participantes" icono={Users}>
               <Text variant="body">{incidente.instituciones}</Text>
+            </Bloque>
+          )}
+          {incidente.solicitudApoyo && (
+            <Bloque titulo="Solicitud de apoyo" icono={HandHelping}>
+              <Text variant="body">{incidente.solicitudApoyo}</Text>
             </Bloque>
           )}
         </>
