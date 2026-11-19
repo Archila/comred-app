@@ -171,9 +171,9 @@ function TituloSeccion({ presentacion }: { presentacion: PresentacionSeccion }) 
 }
 
 /**
- * Lo que solo ve un administrador sobre las tarjetas. En Reportes y Jornadas
- * lo primero es registrar el desastre o la jornada; publicar sobre uno ya
- * registrado (el seguimiento) va despues.
+ * Lo que solo ve un administrador sobre las tarjetas. En Reportes, Jornadas y
+ * Proyectos lo primero es registrar el desastre, la jornada o la obra;
+ * publicar sobre uno ya registrado (el seguimiento) va despues.
  */
 function AccionesAdministrador({
   seccion,
@@ -206,9 +206,20 @@ function AccionesAdministrador({
           onPress={() => router.push('/jornadas/registrar' as Href)}
         />
       )}
+      {seccion === 'PROYECTOS' && (
+        <Button
+          label="Nuevo proyecto"
+          icon={HardHat}
+          size="lg"
+          fullWidth
+          onPress={() => router.push('/proyectos/registrar' as Href)}
+        />
+      )}
       <BotonNuevaPublicacion
         seccion={seccion}
-        variante={seccion === 'REPORTES' || seccion === 'JORNADAS' ? 'outline' : 'primary'}
+        variante={
+          seccion === 'REPORTES' || seccion === 'JORNADAS' || seccion === 'PROYECTOS' ? 'outline' : 'primary'
+        }
       />
       {conCamara && (
         <Text variant="caption" className="text-center">

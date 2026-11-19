@@ -4,12 +4,12 @@ import { useState } from 'react';
 import { Platform, Pressable, View } from 'react-native';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { cn, formatDateTime } from '@/lib';
+import { cn, fechaSinHora, formatDateOnly, formatDateTime } from '@/lib';
 import { useBrandColors } from '@/store';
 
 import { Button } from './button';
 import { Icon } from './icon';
-import { fechaInicial, type SelectorFechaProps } from './selector-fecha.comun';
+import { aMediodia, fechaInicial, type SelectorFechaProps } from './selector-fecha.comun';
 import { Text } from './text';
 
 export { proximaHora, type SelectorFechaProps } from './selector-fecha.comun';
@@ -29,11 +29,14 @@ export function SelectorFecha({
   placeholder,
   error,
   deshabilitado = false,
+  soloFecha = false,
 }: SelectorFechaProps) {
   const scheme = useColorScheme();
   const brand = useBrandColors();
   const [abiertoIos, setAbiertoIos] = useState(false);
   const inicial = fechaInicial(valor, minimo, maximo);
+  // Solo el dia: se muestra con sus componentes locales, sin pasar por la zona de Guatemala.
+  const texto = valor ? (soloFecha ? formatDateOnly(fechaSinHora(valor)) : formatDateTime(valor)) : '';
 
   function abrir() {
     if (Platform.OS === 'android') {
@@ -43,12 +46,14 @@ export function SelectorFecha({
         minimumDate: minimo,
         maximumDate: maximo,
         onValueChange: (_evento, fecha) =>
-          DateTimePickerAndroid.open({
-            value: fecha,
-            mode: 'time',
-            is24Hour: true,
-            onValueChange: (_eventoHora, conHora) => onCambiar(conHora),
-          }),
+          soloFecha
+            ? onCambiar(aMediodia(fecha))
+            : DateTimePickerAndroid.open({
+                value: fecha,
+                mode: 'time',
+                is24Hour: true,
+                onValueChange: (_eventoHora, conHora) => onCambiar(conHora),
+              }),
       });
       return;
     }
@@ -59,7 +64,7 @@ export function SelectorFecha({
     <View className="gap-2">
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={valor ? `Fecha elegida: ${formatDateTime(valor)}` : placeholder}
+        accessibilityLabel={valor ? `Fecha elegida: ${texto}` : placeholder}
         disabled={deshabilitado}
         onPress={abrir}
         className={cn(
@@ -76,7 +81,7 @@ export function SelectorFecha({
             valor ? 'text-content dark:text-content-dark-default' : 'text-content-subtle dark:text-content-dark-subtle',
           )}
         >
-          {valor ? formatDateTime(valor) : placeholder}
+          {valor ? texto : placeholder}
         </Text>
       </Pressable>
 
@@ -84,14 +89,14 @@ export function SelectorFecha({
         <View className="items-center rounded-field border border-line bg-surface p-2 dark:border-line-dark dark:bg-surface-dark-muted">
           <DateTimePicker
             value={inicial}
-            mode="datetime"
+            mode={soloFecha ? 'date' : 'datetime'}
             display="inline"
             locale="es-GT"
             minimumDate={minimo}
             maximumDate={maximo}
             themeVariant={scheme === 'dark' ? 'dark' : 'light'}
             accentColor={brand.primary}
-            onValueChange={(_evento, fecha) => onCambiar(fecha)}
+            onValueChange={(_evento, fecha) => onCambiar(soloFecha ? aMediodia(fecha) : fecha)}
           />
           <Button label="Listo" variant="ghost" size="sm" onPress={() => setAbiertoIos(false)} />
         </View>

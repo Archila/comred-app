@@ -9,10 +9,25 @@ import { Text } from './text';
 
 export { proximaHora, type SelectorFechaProps } from './selector-fecha.comun';
 
+const dos = (n: number) => String(n).padStart(2, '0');
+
+/** `AAAA-MM-DD` en hora local, el formato de `<input type="date">`. */
+function aDiaLocal(fecha: Date): string {
+  return `${fecha.getFullYear()}-${dos(fecha.getMonth() + 1)}-${dos(fecha.getDate())}`;
+}
+
 /** `AAAA-MM-DDTHH:mm` en hora local, el formato de `<input type="datetime-local">`. */
 function aLocal(fecha: Date): string {
-  const dos = (n: number) => String(n).padStart(2, '0');
-  return `${fecha.getFullYear()}-${dos(fecha.getMonth() + 1)}-${dos(fecha.getDate())}T${dos(fecha.getHours())}:${dos(fecha.getMinutes())}`;
+  return `${aDiaLocal(fecha)}T${dos(fecha.getHours())}:${dos(fecha.getMinutes())}`;
+}
+
+/**
+ * `new Date('AAAA-MM-DD')` es medianoche UTC, que en Guatemala es el dia
+ * anterior: se arma a mediodia local.
+ */
+function deDiaLocal(texto: string): Date | null {
+  const partes = /^(\d{4})-(\d{2})-(\d{2})$/.exec(texto);
+  return partes ? new Date(Number(partes[1]), Number(partes[2]) - 1, Number(partes[3]), 12) : null;
 }
 
 /**
@@ -27,22 +42,26 @@ export function SelectorFecha({
   placeholder,
   error,
   deshabilitado = false,
+  soloFecha = false,
 }: SelectorFechaProps) {
   const scheme = useColorScheme();
   const tema = scheme === 'dark' ? Colors.dark : Colors.light;
+  const formato = soloFecha ? aDiaLocal : aLocal;
 
   return (
     <View className="gap-2">
       {createElement('input', {
-        type: 'datetime-local',
+        type: soloFecha ? 'date' : 'datetime-local',
         'aria-label': placeholder,
-        value: valor ? aLocal(valor) : '',
-        min: minimo ? aLocal(minimo) : undefined,
-        max: maximo ? aLocal(maximo) : undefined,
+        value: valor ? formato(valor) : '',
+        min: minimo ? formato(minimo) : undefined,
+        max: maximo ? formato(maximo) : undefined,
         disabled: deshabilitado,
         onChange: (evento: { target: { value: string } }) => {
           const texto = evento.target.value;
-          if (texto) onCambiar(new Date(texto));
+          if (!texto) return;
+          const fecha = soloFecha ? deDiaLocal(texto) : new Date(texto);
+          if (fecha) onCambiar(fecha);
         },
         style: {
           height: 48,

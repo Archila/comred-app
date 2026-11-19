@@ -4,7 +4,7 @@ import { View } from 'react-native';
 import { useOrganizacion } from '@/store';
 
 // Escudo empaquetado en el binario: se ve aun sin red ni bootstrap previo.
-const LOGO_MUNI = require('@/assets/images/logo-muni.jpeg');
+const LOGO_MUNI = require('@/assets/images/logo-muni.png');
 
 /**
  * Escudo de la municipalidad dentro de un circulo blanco.

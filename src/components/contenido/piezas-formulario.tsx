@@ -383,12 +383,15 @@ export function OpcionMosaico({
   seleccionado,
   deshabilitado,
   onPress,
+  lineas = 2,
 }: {
   nombre: string;
   icono: LucideIcon;
   seleccionado: boolean;
   deshabilitado: boolean;
   onPress: () => void;
+  /** Lineas del nombre. Los tipos de proyecto son largos y necesitan mas. */
+  lineas?: number;
 }) {
   return (
     <Pressable
@@ -421,7 +424,7 @@ export function OpcionMosaico({
           }
         />
       </View>
-      <Text variant="body" className="text-center text-sm font-semibold" numberOfLines={2}>
+      <Text variant="body" className="text-center text-sm font-semibold" numberOfLines={lineas}>
         {nombre}
       </Text>
     </Pressable>

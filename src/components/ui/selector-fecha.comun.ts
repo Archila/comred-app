@@ -12,6 +12,18 @@ export interface SelectorFechaProps {
   placeholder: string;
   error?: string | null;
   deshabilitado?: boolean;
+  /**
+   * Solo el dia, sin hora (columnas DATE, como las de un proyecto). El valor
+   * llega a mediodia local: ningun cambio de zona horaria lo mueve de dia.
+   */
+  soloFecha?: boolean;
+}
+
+/** El mismo dia a las 12:00 locales. */
+export function aMediodia(fecha: Date): Date {
+  const copia = new Date(fecha);
+  copia.setHours(12, 0, 0, 0);
+  return copia;
 }
 
 /** Sin valor, el selector arranca en la proxima hora en punto. */

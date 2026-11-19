@@ -3,6 +3,7 @@ export * from './pantalla-categorias';
 export * from './pantalla-nueva-jornada';
 export * from './pantalla-nueva-publicacion';
 export * from './pantalla-nuevo-boletin';
+export * from './pantalla-nuevo-proyecto';
 export * from './pantalla-reportar-incidente';
 export * from './tarjeta-publicacion';
 export * from './detalle-publicacion';

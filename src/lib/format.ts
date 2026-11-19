@@ -63,6 +63,16 @@ export function formatDateOnly(value?: string | null): string {
   return partes ? `${partes[3]}/${partes[2]}/${partes[1]}` : '';
 }
 
+/**
+ * El dia que se eligio en el selector, como 'AAAA-MM-DD' (lo que guardan las
+ * columnas DATE). Con los componentes LOCALES: `toISOString` pasa a UTC y de
+ * noche en Guatemala ya seria el dia siguiente.
+ */
+export function fechaSinHora(fecha: Date): string {
+  const dos = (n: number) => String(n).padStart(2, '0');
+  return `${fecha.getFullYear()}-${dos(fecha.getMonth() + 1)}-${dos(fecha.getDate())}`;
+}
+
 /** Cantidad con separador de miles de Guatemala. Ej: 1243 -> "1,243". */
 export function formatNumber(value: number): string {
   return new Intl.NumberFormat(LOCALE).format(value);

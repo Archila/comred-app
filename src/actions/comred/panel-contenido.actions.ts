@@ -6,9 +6,11 @@ import type {
   CategoriaContenido,
   CrearIncidentePayload,
   CrearJornadaPayload,
+  CrearProyectoPayload,
   ImagenComprimida,
   IncidenteCreado,
   JornadaCreada,
+  ProyectoCreado,
 } from '@/models';
 
 /**
@@ -25,6 +27,12 @@ export const panelContenidoActions = {
   /** `POST /comred/contenido/jornadas` (exige `JOR_CREAR`). */
   async crearJornada(payload: CrearJornadaPayload): Promise<JornadaCreada> {
     const response = await api.post<JornadaCreada>(ENDPOINTS.contenidoPanel.jornadas, payload);
+    return response.data;
+  },
+
+  /** `POST /comred/contenido/proyectos` (exige `PROY_CREAR`). */
+  async crearProyecto(payload: CrearProyectoPayload): Promise<ProyectoCreado> {
+    const response = await api.post<ProyectoCreado>(ENDPOINTS.contenidoPanel.proyectos, payload);
     return response.data;
   },
 

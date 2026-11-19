@@ -320,6 +320,32 @@ export interface JornadaCreada {
   categoriaContenidoId: string;
 }
 
+/** Cuerpo de `POST /comred/contenido/proyectos`. Espejo de `CreateProyectoDto`. */
+export interface CrearProyectoPayload {
+  /** El tipo de proyecto: una tarjeta de Proyectos. */
+  categoriaContenidoId: string;
+  nombre: string;
+  descripcion?: string;
+  /** Comunidad beneficiada. */
+  comunidad?: string;
+  /** Dependencia responsable. */
+  dependencia?: string;
+  /** 'AAAA-MM-DD', sin hora. */
+  fechaInicio?: string;
+  fechaFinPrevista?: string;
+  /** Sin el, el API pone EN_EJECUCION. */
+  estado?: EstadoProyecto;
+  /** Porcentaje 0-100 comprobado. Sin el, "sin dato" (no es 0). */
+  avance?: number;
+  latitud?: number;
+  longitud?: number;
+}
+
+export interface ProyectoCreado {
+  id: string;
+  categoriaContenidoId: string;
+}
+
 /** Lo que la app usa de la respuesta del alta (el API devuelve la entidad entera). */
 export interface PublicacionCreada {
   id: string;

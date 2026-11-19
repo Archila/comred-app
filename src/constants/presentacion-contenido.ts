@@ -5,6 +5,7 @@ import {
   BadgeCheck,
   BrickWall,
   Brain,
+  Bridge,
   Building2,
   CalendarDays,
   CarFront,
@@ -36,6 +37,7 @@ import {
   Umbrella,
   Users,
   Waves,
+  WavesArrowDown,
   Wind,
   Wrench,
   type LucideIcon,
@@ -141,6 +143,7 @@ const ICONOS: Record<string, LucideIcon> = {
   backpack: Backpack,
   brain: Brain,
   'brick-wall': BrickWall,
+  bridge: Bridge,
   'building-2': Building2,
   'car-front': CarFront,
   'calendar-days': CalendarDays,
@@ -171,6 +174,7 @@ const ICONOS: Record<string, LucideIcon> = {
   umbrella: Umbrella,
   users: Users,
   waves: Waves,
+  'waves-arrow-down': WavesArrowDown,
   wind: Wind,
   wrench: Wrench,
 };
@@ -193,7 +197,9 @@ const PALABRAS: [RegExp, LucideIcon][] = [
   [/lluvia|tormenta/, CloudRain],
   [/viento/, Wind],
   [/accidente/, CarFront],
-  [/carretera|camino|vial/, Construction],
+  [/carretera|camino|vial|calle/, Construction],
+  [/puente/, Bridge],
+  [/alcantarilla|drenaje/, WavesArrowDown],
   [/educativ|escuela|escolar/, School],
   [/infraestructura|edific|comunitario/, Building2],
   [/mochila/, Backpack],
@@ -238,12 +244,12 @@ export function iconoDeCategoria(
 }
 
 /* -------------------------------------------------------------------------- */
-/* Foto fija de cada tipo de boletin y de jornada                              */
+/* Foto fija de cada tipo de boletin, de jornada y de proyecto                 */
 /* -------------------------------------------------------------------------- */
 
 /**
- * Los tipos de boletin y de jornada (migraciones `TiposBoletin` y
- * `TiposJornada` del API) llevan una foto
+ * Los tipos de boletin, de jornada y de proyecto (migraciones `TiposBoletin`,
+ * `TiposJornada` y `TiposProyecto` del API) llevan una foto
  * FIJA, empaquetada en el binario: se ve sin red, es la misma en todas las
  * municipalidades y no se cambia desde la app. Para poner la foto real basta
  * con sustituir el archivo conservando el nombre.
@@ -268,6 +274,13 @@ const PORTADAS_FIJAS: Partial<Record<SeccionContenido, Record<string, number>>> 
     'jornada oftalmologica': require('@/assets/images/jornadas/jornada-oftalmologica.jpeg'),
     'jornada odontologica': require('@/assets/images/jornadas/jornada-odontologica.jpeg'),
     'jornada de nutricion': require('@/assets/images/jornadas/jornada-de-nutricion.jpeg'),
+  },
+  PROYECTOS: {
+    'mejoramiento de caminos rurales y calles': require('@/assets/images/proyectos/mejoramiento-de-caminos-rurales-y-calles.jpeg'),
+    'construccion y mejoramiento de puentes': require('@/assets/images/proyectos/construccion-y-mejoramiento-de-puentes.jpeg'),
+    'construccion y ampliacion de sistemas de agua potable': require('@/assets/images/proyectos/construccion-y-ampliacion-de-sistemas-de-agua-potable.jpeg'),
+    'construccion de alcantarillado sanitario': require('@/assets/images/proyectos/construccion-de-alcantarillado-sanitario.jpeg'),
+    'remozamiento, construccion y ampliacion de infraestructura educativa': require('@/assets/images/proyectos/remozamiento-construccion-y-ampliacion-de-infraestructura-educativa.jpeg'),
   },
 };
 

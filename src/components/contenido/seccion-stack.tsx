@@ -48,6 +48,9 @@ export function SeccionStack({ seccion }: { seccion: SeccionConVisor }) {
         {seccion === 'JORNADAS' && (
           <Stack.Screen name="registrar" options={{ title: 'Nueva jornada' }} />
         )}
+        {seccion === 'PROYECTOS' && (
+          <Stack.Screen name="registrar" options={{ title: 'Nuevo proyecto' }} />
+        )}
       </Stack.Protected>
     </Stack>
   );
