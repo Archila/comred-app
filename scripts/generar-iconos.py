@@ -1,17 +1,25 @@
-"""Genera el ícono adaptativo de Android y la imagen del splash a partir de
-`assets/images/icon.png` (el escudo de la municipalidad, con o sin esquinas
-negras alrededor).
+"""Genera los íconos de Android, el splash y el favicon a partir de dos imágenes
+de `assets/images/`:
+
+  - icon.png       el ícono de la app (escudo sobre su fondo). Puede venir con
+                   fondo transparente o con esquinas negras alrededor.
+  - logo-muni.png  el escudo suelto, con fondo transparente (el mismo que usa
+                   `MuniLogo` dentro de la app).
 
     python -X utf8 scripts/generar-iconos.py [carpeta-vista-previa]
 
 Escribe en `assets/images/`:
-  - android-icon-foreground.png  escudo centrado en la zona segura del ícono
+  - android-icon-foreground.png  icon.png centrado en la zona segura del ícono
                                  adaptativo (círculo de 66 dp de 108 dp);
-  - android-icon-monochrome.png  silueta para los íconos temáticos (Android 13+);
-  - splash-icon.png              escudo recortado al borde, para el splash.
-El fondo de ambos es el azul de la marca (`paleta.marca.secundario`), que pone
-`app.config.js`. Imprime el `imageWidth` que necesita el splash en `app.json`
-para caber en el círculo de 192 dp de Android 12+.
+  - android-icon-monochrome.png  silueta de logo-muni.png con las líneas
+                                 oscuras caladas, para los íconos temáticos
+                                 (Android 13+; solo cuenta el canal alfa);
+  - splash-icon.png              logo-muni.png recortado al borde;
+  - favicon.png                  icon.png a 196 px, para la versión web.
+El fondo del ícono adaptativo y del splash es el azul de la marca
+(`paleta.marca.secundario`), que pone `app.config.js`. Imprime el `imageWidth`
+que necesita el splash en `app.json` para caber en el círculo de 192 dp de
+Android 12+.
 
 Con una carpeta como argumento, deja ahí `vista-previa.png` (ícono con máscara
 circular y redondeada, monocromo y splash).
@@ -29,93 +37,116 @@ from PIL import Image, ImageDraw
 ORIGEN = Path(__file__).resolve().parent.parent / "assets" / "images"
 PREVIA = Path(sys.argv[1]) if len(sys.argv) > 1 else None
 NAVY = (0x0C, 0x23, 0x4D)
+SS = 4  # sobremuestreo de las máscaras geométricas
 
-icono = Image.open(ORIGEN / "icon.png").convert("RGB")
-rgb = np.asarray(icono).astype(np.int32)
-alto, ancho = rgb.shape[:2]
 
-# 1. Fondo negro: lo oscuro conectado con las esquinas (relleno por inundación).
-oscuro = rgb.max(axis=2) < 60
-fondo = np.zeros_like(oscuro)
-cola = deque((y, x) for y, x in [(0, 0), (0, ancho - 1), (alto - 1, 0), (alto - 1, ancho - 1)])
-while cola:
-    y, x = cola.popleft()
-    if 0 <= y < alto and 0 <= x < ancho and oscuro[y, x] and not fondo[y, x]:
-        fondo[y, x] = True
-        cola.extend(((y + 1, x), (y - 1, x), (y, x + 1), (y, x - 1)))
+def mascara_esquinas_negras(rgb):
+    """Escudo con esquinas negras (sin transparencia): lo oscuro conectado con
+    las esquinas es fondo. Se sustituye por un rectángulo redondeado
+    geométrico, metido unos px para quitar el filo oscuro."""
+    alto, ancho = rgb.shape[:2]
+    oscuro = rgb.max(axis=2) < 60
+    fondo = np.zeros_like(oscuro)
+    cola = deque([(0, 0), (0, ancho - 1), (alto - 1, 0), (alto - 1, ancho - 1)])
+    while cola:
+        y, x = cola.popleft()
+        if 0 <= y < alto and 0 <= x < ancho and oscuro[y, x] and not fondo[y, x]:
+            fondo[y, x] = True
+            cola.extend(((y + 1, x), (y - 1, x), (y, x + 1), (y, x - 1)))
 
-escudo = ~fondo
-ys, xs = np.where(escudo)
-top, bottom, left, right = ys.min(), ys.max(), xs.min(), xs.max()
+    escudo = ~fondo
+    ys, xs = np.where(escudo)
+    top, bottom, left, right = ys.min(), ys.max(), xs.min(), xs.max()
 
-# 2. Radio de las esquinas, por la diagonal desde la esquina de la caja.
-d = 0
-while not escudo[top + d, left + d]:
-    d += 1
-radio = (d * np.sqrt(2)) / (np.sqrt(2) - 1)
-print(f"caja=({left},{top})-({right},{bottom}) radio≈{radio:.0f}")
+    # Radio de las esquinas, por la diagonal desde la esquina de la caja.
+    d = 0
+    while not escudo[top + d, left + d]:
+        d += 1
+    radio = (d * np.sqrt(2)) / (np.sqrt(2) - 1)
 
-# 3. Máscara geométrica suavizada (4x), metida unos px para quitar el filo oscuro.
-MARGEN, SS = 4, 4
-mascara_grande = Image.new("L", (ancho * SS, alto * SS), 0)
-ImageDraw.Draw(mascara_grande).rounded_rectangle(
-    [(left + MARGEN) * SS, (top + MARGEN) * SS, (right - MARGEN) * SS, (bottom - MARGEN) * SS],
-    radius=(radio - MARGEN) * SS,
-    fill=255,
-)
-mascara = mascara_grande.resize((ancho, alto), Image.LANCZOS)
+    margen = 4
+    grande = Image.new("L", (ancho * SS, alto * SS), 0)
+    ImageDraw.Draw(grande).rounded_rectangle(
+        [(left + margen) * SS, (top + margen) * SS, (right - margen) * SS, (bottom - margen) * SS],
+        radius=(radio - margen) * SS,
+        fill=255,
+    )
+    return grande.resize((ancho, alto), Image.LANCZOS)
 
-recorte = (left, top, right + 1, bottom + 1)
-escudo_rgba = icono.convert("RGBA")
-escudo_rgba.putalpha(mascara)
-escudo_rgba = escudo_rgba.crop(recorte)
-lado = max(escudo_rgba.size)
-cuadrado = Image.new("RGBA", (lado, lado), (0, 0, 0, 0))
-cuadrado.paste(escudo_rgba, ((lado - escudo_rgba.width) // 2, (lado - escudo_rgba.height) // 2))
 
-# Distancia máxima del centro a un punto del escudo, en fracción del lado:
-# (lado/2 - r)·√2 + r. Es lo que debe caber en el círculo seguro.
-r_rel = (radio - MARGEN) / lado
-extension = (0.5 - r_rel) * np.sqrt(2) + r_rel
-print(f"extensión desde el centro = {extension:.3f} del lado")
+def cargar_recortado(nombre):
+    """La imagen en RGBA, recortada a lo visible y centrada en un cuadrado."""
+    imagen = Image.open(ORIGEN / nombre)
+    if imagen.mode in ("RGBA", "LA", "P") and np.asarray(imagen.convert("RGBA"))[..., 3].min() < 255:
+        rgba = imagen.convert("RGBA")
+    else:
+        rgba = imagen.convert("RGB").convert("RGBA")
+        rgba.putalpha(mascara_esquinas_negras(np.asarray(imagen.convert("RGB")).astype(np.int32)))
+
+    caja = rgba.getchannel("A").point(lambda a: 255 if a > 8 else 0).getbbox()
+    rgba = rgba.crop(caja)
+    lado = max(rgba.size)
+    cuadrado = Image.new("RGBA", (lado, lado), (0, 0, 0, 0))
+    cuadrado.paste(rgba, ((lado - rgba.width) // 2, (lado - rgba.height) // 2))
+    return cuadrado
+
+
+def extension(imagen):
+    """Distancia del centro al píxel visible más lejano, en fracción del lado.
+    Es lo que tiene que caber en el círculo seguro."""
+    alfa = np.asarray(imagen.getchannel("A")) > 8
+    ys, xs = np.nonzero(alfa)
+    c = (imagen.width - 1) / 2
+    return float(np.sqrt((ys - c) ** 2 + (xs - c) ** 2).max() + 0.5) / imagen.width
 
 
 def en_lienzo(imagen, lienzo, diametro_seguro):
     """Centra la imagen escalada para que quepa en el círculo seguro."""
-    lado_px = int(diametro_seguro / 2 / extension)
+    lado_px = int(diametro_seguro / 2 / extension(imagen))
     capa = Image.new("RGBA", (lienzo, lienzo), (0, 0, 0, 0))
     capa.alpha_composite(imagen.resize((lado_px, lado_px), Image.LANCZOS), ((lienzo - lado_px) // 2,) * 2)
     return capa, lado_px
 
 
-# 4. Ícono adaptativo: lienzo 108 dp, zona segura = círculo de 66 dp.
+icono = cargar_recortado("icon.png")
+logo = cargar_recortado("logo-muni.png")
+print(f"icon.png: {icono.width}px, extensión {extension(icono):.3f} del lado")
+print(f"logo-muni.png: {logo.width}px, extensión {extension(logo):.3f} del lado")
+
+# 1. Ícono adaptativo: lienzo 108 dp, zona segura = círculo de 66 dp.
 LIENZO = 1024
 SEGURO = LIENZO * 66 / 108 * 0.96  # 4 % de holgura
-frente, lado_icono = en_lienzo(cuadrado, LIENZO, SEGURO)
+frente, lado_icono = en_lienzo(icono, LIENZO, SEGURO)
 frente.save(ORIGEN / "android-icon-foreground.png", optimize=True)
-print(f"android-icon-foreground.png: escudo de {lado_icono}px en {LIENZO}px")
+print(f"android-icon-foreground.png: ícono de {lado_icono}px en {LIENZO}px")
+if lado_icono > icono.width:
+    print(f"  [AVISO] icon.png mide {icono.width}px y se amplía a {lado_icono}px: conviene uno más grande.")
 
-# Monocromo (íconos temáticos de Android 13): el escudo macizo con el dibujo
-# y las letras calados. Android usa solo el canal alfa.
-lineas = np.asarray(cuadrado.convert("L")).astype(np.float32)
-alfa_escudo = np.asarray(cuadrado.getchannel("A")).astype(np.float32)
-# Oscuro (línea) -> 0; claro (fondo del escudo) -> 255.
-claridad = np.clip((lineas - 70) / (150 - 70), 0, 1)
-alfa_mono = (alfa_escudo * claridad).astype(np.uint8)
-mono = Image.new("RGBA", cuadrado.size, (255, 255, 255, 0))
-mono.putalpha(Image.fromarray(alfa_mono))
+# 2. Monocromo: la silueta del escudo con las líneas oscuras (contornos, letras)
+# caladas. Se mide por el canal más claro y no por la luminancia: así el rojo
+# o el verde cuentan como relleno y solo el negro se cala.
+valor = np.asarray(logo.convert("RGB")).astype(np.float32).max(axis=2)
+alfa_logo = np.asarray(logo.getchannel("A")).astype(np.float32)
+relleno = np.clip((valor - 55) / (110 - 55), 0, 1)
+mono = Image.new("RGBA", logo.size, (255, 255, 255, 0))
+mono.putalpha(Image.fromarray((alfa_logo * relleno).astype(np.uint8)))
 mono_lienzo, _ = en_lienzo(mono, LIENZO, SEGURO)
 mono_lienzo.save(ORIGEN / "android-icon-monochrome.png", optimize=True)
 
-# 5. Splash: Expo lo centra en un lienzo de 288 dp con `imageWidth` dp de
+# 3. Splash: Expo lo centra en un lienzo de 288 dp con `imageWidth` dp de
 # ancho, y Android 12+ lo recorta a un círculo de 192 dp. Se guarda el escudo
 # recortado al borde; el tamaño lo fija imageWidth en app.json.
-splash = cuadrado.resize((1024, 1024), Image.LANCZOS)
+splash = logo.resize((1024, 1024), Image.LANCZOS)
 splash.save(ORIGEN / "splash-icon.png", optimize=True)
-IMAGE_WIDTH = int(192 * 0.96 / 2 / extension)
+IMAGE_WIDTH = int(192 * 0.96 / 2 / extension(logo))
 print(f"splash-icon.png: imageWidth recomendado = {IMAGE_WIDTH}")
 
-# 6. Vistas previas: ícono con máscara circular y squircle, splash, monocromo.
+# 4. Favicon de la versión web.
+icono.resize((196, 196), Image.LANCZOS).save(ORIGEN / "favicon.png", optimize=True)
+print("favicon.png: 196px")
+
+
+# 5. Vistas previas: ícono con máscara circular y squircle, monocromo, splash.
 def con_mascara(forma):
     base = Image.new("RGBA", (LIENZO, LIENZO), NAVY + (255,))
     base.alpha_composite(frente)
@@ -140,6 +171,10 @@ def vista_splash():
         splash.resize((lado_px, lado_px), Image.LANCZOS),
         ((pantalla.width - lado_px) // 2, (pantalla.height - lado_px) // 2),
     )
+    # Círculo de 192 dp que deja ver Android 12+.
+    r = 192 * dp // 4
+    cx, cy = pantalla.width // 2, pantalla.height // 2
+    ImageDraw.Draw(pantalla).ellipse([cx - r, cy - r, cx + r, cy + r], outline=(255, 255, 255, 90), width=2)
     return pantalla.resize((360, 720), Image.LANCZOS)
 
 

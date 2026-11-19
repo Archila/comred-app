@@ -46,7 +46,8 @@ function versionACodigo(version) {
  * de Android. Solo se aplican al recompilar (`npx expo prebuild` +
  * `npx expo run:android`).
  *
- * Las imagenes del icono y del splash salen de `assets/images/icon.png` con
+ * Las imagenes del icono, del splash y el favicon salen de
+ * `assets/images/icon.png` y `assets/images/logo-muni.png` con
  * `python -X utf8 scripts/generar-iconos.py`.
  */
 const paleta = require('./src/config/paleta');
