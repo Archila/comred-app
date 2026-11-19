@@ -16,8 +16,11 @@ import { Text } from '../ui/text';
  *
  * Es el `header` de las pestanas de `app/(app)/_layout.tsx`, por eso aplica el
  * mismo el inset superior en vez de dejarselo a cada pantalla.
+ *
+ * Con `onAbrirMenu`, tocar el escudo abre el menu lateral (ademas del boton
+ * flotante).
  */
-export function AppHeader({ title }: { title?: string }) {
+export function AppHeader({ title, onAbrirMenu }: { title?: string; onAbrirMenu?: () => void }) {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const nombreMunicipalidad = useNombreMunicipalidad();
@@ -26,7 +29,19 @@ export function AppHeader({ title }: { title?: string }) {
   return (
     <View className="bg-secondary-500" style={{ paddingTop: insets.top }}>
       <View className="flex-row items-center gap-3 px-4 pb-3 pt-2">
-        <MuniLogo size={44} />
+        {onAbrirMenu ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Abrir menu"
+            hitSlop={8}
+            onPress={onAbrirMenu}
+            className="active:opacity-70"
+          >
+            <MuniLogo size={44} />
+          </Pressable>
+        ) : (
+          <MuniLogo size={44} />
+        )}
 
         <View className="flex-1">
           <Text variant="plain" className="text-xl font-bold leading-6 text-secondary-foreground">

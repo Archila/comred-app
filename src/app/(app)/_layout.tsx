@@ -21,11 +21,12 @@ import {
  * Sigue siendo un navegador de pestanas —cada pantalla conserva su estado al
  * cambiar de seccion— pero sin barra inferior: la navegacion la hacen el
  * encabezado institucional (`AppHeader`) y el menu lateral, que se abre con
- * el boton flotante. Ambos van superpuestos al navegador, no dentro, para
+ * el boton flotante o tocando el escudo del encabezado. Ambos van superpuestos al navegador, no dentro, para
  * verse en todas las pantallas.
  */
 export default function AppLayout() {
   const [menuAbierto, setMenuAbierto] = useState(false);
+  const abrirMenu = useCallback(() => setMenuAbierto(true), []);
   const cerrarMenu = useCallback(() => setMenuAbierto(false), []);
 
   // Mientras carga, o si falla, la opcion no aparece: es preferible a
@@ -47,7 +48,7 @@ export default function AppLayout() {
       <Tabs
         tabBar={() => null}
         screenOptions={{
-          header: ({ options }) => <AppHeader title={options.title} />,
+          header: ({ options }) => <AppHeader title={options.title} onAbrirMenu={abrirMenu} />,
         }}
       >
         {/* Sin `title`: el inicio muestra solo el encabezado institucional. */}
@@ -98,7 +99,7 @@ export default function AppLayout() {
         />
       </Tabs>
 
-      <BotonMenu onPress={() => setMenuAbierto(true)} />
+      <BotonMenu onPress={abrirMenu} />
       <MenuLateral
         abierto={menuAbierto}
         onCerrar={cerrarMenu}
