@@ -215,11 +215,18 @@ function Flecha({
       hitSlop={8}
       onPress={onPress}
       className={cn(
-        'absolute top-1/2 -mt-5 h-10 w-10 items-center justify-center rounded-full bg-surface/90 active:opacity-70',
+        // Rojo de la marca con borde claro: se distingue sobre fotos claras y
+        // oscuras, y sobre la tarjeta en modo claro y oscuro.
+        'absolute top-1/2 -mt-5 h-10 w-10 items-center justify-center rounded-full border-2 border-white/80 bg-primary-500 active:opacity-70',
         lado === 'izquierda' ? 'left-2' : 'right-2',
       )}
     >
-      <Icon as={icono} size={22} className="text-content dark:text-content" />
+      <Icon
+        as={icono}
+        size={22}
+        strokeWidth={2.75}
+        className="text-primary-foreground dark:text-primary-foreground"
+      />
     </Pressable>
   );
 }
