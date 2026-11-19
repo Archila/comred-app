@@ -15,7 +15,7 @@ import {
   Text,
 } from '@/components';
 import { useCapacidadesEnvio, usePublicacionesPrincipales } from '@/hooks';
-import { resolveAssetUrl } from '@/lib';
+import { resolveAssetUrl, useVersionImagenes } from '@/lib';
 import type { Publicacion } from '@/models';
 import { useBrandColors, useOrganizacion } from '@/store';
 
@@ -30,11 +30,15 @@ export default function HomeScreen() {
   const brand = useBrandColors();
   const publicaciones = usePublicacionesPrincipales();
   const [detalle, setDetalle] = useState<Publicacion | null>(null);
+  // Al recargar imagenes desde el menu cambia la URL de cada imagen
+  // (`imagenesDe`); `extraData` hace que la lista vuelva a pintar las tarjetas.
+  const versionImagenes = useVersionImagenes();
 
   return (
     <View className="flex-1 bg-surface dark:bg-surface-dark">
       <FlatList
         data={publicaciones.data ?? []}
+        extraData={versionImagenes}
         keyExtractor={(publicacion) => publicacion.id}
         // Aire abajo para que el boton flotante del menu no tape la ultima.
         contentContainerStyle={{ padding: 16, paddingBottom: 112, gap: 16 }}

@@ -1,6 +1,8 @@
 import { usePathname, useRouter, type Href } from 'expo-router';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   House,
+  ImageDown,
   LogIn,
   LogOut,
   Megaphone,
@@ -16,7 +18,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { SECCIONES_MENU, estaEnSeccion, rutaDeSeccion } from '@/constants';
 import { useLogout } from '@/hooks';
-import { cn } from '@/lib';
+import { cn, recargarImagenes } from '@/lib';
 
 import { MuniLogo, useNombreMunicipalidad } from '../common/muni-logo';
 import { Icon } from '../ui/icon';
@@ -70,6 +72,7 @@ export function MenuLateral({
   const pathname = usePathname();
   const logout = useLogout();
   const nombreMunicipalidad = useNombreMunicipalidad();
+  const queryClient = useQueryClient();
 
   // Ultima pantalla visitada de cada seccion. Plan Maestro 3.1: "conservar la
   // posicion cuando el usuario regrese desde el menu". Las pestanas no se
@@ -192,6 +195,22 @@ export function MenuLateral({
             )}
 
             <View className="mx-2 my-2 h-px bg-secondary-400" />
+
+            {/*
+              Para cuando una imagen se cambio en el servidor y la app sigue
+              mostrando la anterior. Borra solo la cache de imagenes (la sesion
+              y los demas datos se conservan) y vuelve a pedir el contenido de
+              las pantallas abiertas.
+            */}
+            <Opcion
+              etiqueta="Recargar imágenes"
+              icono={ImageDown}
+              activa={false}
+              onPress={() => {
+                onCerrar();
+                void recargarImagenes().then(() => queryClient.invalidateQueries());
+              }}
+            />
 
             {conSesion ? (
               <>

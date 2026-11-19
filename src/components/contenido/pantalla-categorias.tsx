@@ -30,7 +30,7 @@ import {
   useJornadasPublicas,
   useProyectosPublicos,
 } from '@/hooks';
-import { cn, resolveAssetUrl } from '@/lib';
+import { cn, useAssetUrl } from '@/lib';
 import type { CategoriaContenido } from '@/models';
 import { useBrandColors, usePuedeCrearContenido } from '@/store';
 
@@ -338,7 +338,7 @@ function Tarjeta({
 }) {
   // La foto fija (tipos de boletin) manda sobre la que se haya subido.
   const fija = portadaFijaDe(categoria);
-  const remota = resolveAssetUrl(categoria.portadaUrl);
+  const remota = useAssetUrl(categoria.portadaUrl);
   const portada = fija ?? (remota ? { uri: remota } : undefined);
   const icono = iconoDeCategoria(categoria, presentacion.icono);
   const brand = useBrandColors();

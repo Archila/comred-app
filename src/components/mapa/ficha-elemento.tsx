@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CATEGORIA_RIESGO, ESTADO_ELEMENTO, iconoDeCapa } from '@/constants';
 import { useElementoGeografico } from '@/hooks';
-import { formatDate, formatDateOnly, formatNumber, resolveAssetUrl } from '@/lib';
+import { formatDate, formatDateOnly, formatNumber, useAssetUrl } from '@/lib';
 import type { Bbox, VinculoElemento } from '@/models';
 
 import { abrirUbicacion } from '../contenido/acciones';
@@ -50,7 +50,7 @@ export function FichaElemento({
   const categoriaRiesgo = elemento?.categoriaRiesgo
     ? CATEGORIA_RIESGO[elemento.categoriaRiesgo]
     : null;
-  const foto = resolveAssetUrl(elemento?.fotoUrl);
+  const foto = useAssetUrl(elemento?.fotoUrl);
   const detalles = elemento
     ? [
         elemento.comunidad && `Comunidad: ${elemento.comunidad}`,

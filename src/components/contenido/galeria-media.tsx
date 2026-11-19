@@ -11,7 +11,7 @@ import {
   type NativeSyntheticEvent,
 } from 'react-native';
 
-import { cn, resolveAssetUrl } from '@/lib';
+import { cn, resolveAssetUrl, useAssetUrl } from '@/lib';
 import type { MediaPublicacion } from '@/models';
 
 import { Icon } from '../ui/icon';
@@ -109,7 +109,7 @@ function ImagenMedia({
   ancho: number;
   alto: number;
 }) {
-  const uri = resolveAssetUrl(archivo.url);
+  const uri = useAssetUrl(archivo.url);
 
   return (
     <View style={{ width: ancho, height: alto }}>

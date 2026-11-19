@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { View } from 'react-native';
 
-import { cn, getInitials, resolveAssetUrl } from '@/lib';
+import { cn, getInitials, useAssetUrl } from '@/lib';
 import { useOrganizacion } from '@/store';
 
 import { Text } from '../ui/text';
@@ -15,7 +15,7 @@ import { Text } from '../ui/text';
  */
 export function BrandLogo({ size = 64, className }: { size?: number; className?: string }) {
   const organizacion = useOrganizacion();
-  const uri = resolveAssetUrl(organizacion?.logoUrl);
+  const uri = useAssetUrl(organizacion?.logoUrl);
 
   if (uri) {
     return (

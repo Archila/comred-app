@@ -1,4 +1,5 @@
 export * from './branding';
+export * from './cache-imagenes';
 export * from './cn';
 export * from './device-info';
 export * from './documentos';
