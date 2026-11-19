@@ -21,6 +21,16 @@ SplashScreen.preventAutoHideAsync();
 // render para que las clases `dark:` resuelvan bien desde el inicio. En web
 // solo hay `document` en el navegador, no durante el renderizado estatico.
 if (ESQUEMA_FORZADO && (Platform.OS !== 'web' || typeof document !== 'undefined')) {
+  if (Platform.OS === 'web') {
+    // En web NativeWind decide el tema por la clase `dark` de <html>. Si el
+    // CSS aun no ha cargado cuando corre este codigo (pasa en desarrollo),
+    // `colorScheme.set` no pone la clase, y al cargar el CSS NativeWind la
+    // busca, no la encuentra y vuelve al tema del navegador: la app salia en
+    // claro en un navegador con tema claro. Con la clase puesta a mano,
+    // NativeWind la encuentra siempre.
+    document.documentElement.classList.toggle('dark', ESQUEMA_FORZADO === 'dark');
+    document.documentElement.style.colorScheme = ESQUEMA_FORZADO;
+  }
   nativewindColorScheme.set(ESQUEMA_FORZADO);
 }
 

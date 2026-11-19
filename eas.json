@@ -1,0 +1,21 @@
+{
+  "cli": {
+    "version": ">= 16.0.0",
+    "appVersionSource": "local"
+  },
+  "build": {
+    "beta": {
+      "distribution": "internal",
+      "developmentClient": false,
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api-comred.iesteban.dev/v1",
+        "EXPO_PUBLIC_ENV": "production",
+        "EXPO_PUBLIC_ORGANIZACION_ID": "22222222-2222-4222-8222-222222222222",
+        "EXPO_PUBLIC_API_TIMEOUT": "20000"
+      }
+    }
+  }
+}
